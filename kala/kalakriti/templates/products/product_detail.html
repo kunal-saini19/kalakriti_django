@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - KalaKriti{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-16">
+    <!-- Breadcrumb -->
+    <div class="mb-8 text-sm text-gray-600">
+        <a href="{% url 'kalakriti:home' %}" class="hover:text-indiaOrange">Home</a> /
+        <a href="{% url 'kalakriti:products_list' %}" class="hover:text-indiaOrange">Products</a> /
+        <span>{{ product.name }}</span>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+        <!-- Product Image -->
+        <div>
+            {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full rounded-lg shadow-lg">
+            {% else %}
+                <div class="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-image text-gray-400 text-6xl"></i>
+                </div>
+            {% endif %}
+            
+            <!-- Gallery -->
+            {% if product.gallery_images %}
+                <div class="flex gap-4 mt-4">
+                    {% for img_url in product.gallery_images %}
+                    <img src="{{ img_url }}" alt="Gallery" class="w-20 h-20 object-cover rounded cursor-pointer hover:opacity-80">
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Product Info -->
+        <div>
+            <h1 class="text-4xl font-bold mb-2">{{ product.name }}</h1>
+            
+            {% if product.category %}
+                <p class="text-indiaOrange font-medium mb-4">{{ product.category.name }}</p>
+            {% endif %}
+            
+            <!-- Rating -->
+            {% if product.rating %}
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="flex gap-1">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= product.rating %}
+                                <i class="fas fa-star text-yellow-400"></i>
+                            {% else %}
+                                <i class="fas fa-star text-gray-300"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="text-gray-600">({{ product.reviews_count }} reviews)</span>
+                </div>
+            {% endif %}
+            
+            <!-- Price -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+                {% if product.original_price %}
+                    <p class="text-4xl font-bold text-indiaOrange">₹{{ product.price }}</p>
+                    <p class="text-gray-500 line-through">₹{{ product.original_price }}</p>
+                    <p class="text-green-600 font-semibold mt-2">
+                        Save ₹{{ product.original_price|add:"-"|add:product.price }}
+                    </p>
+                {% else %}
+                    <p class="text-4xl font-bold text-indiaOrange">₹{{ product.price }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Description -->
+            <div class="mb-6">
+                <h2 class="font-bold text-lg mb-2">Description</h2>
+                <p class="text-gray-700 leading-relaxed">{{ product.description }}</p>
+            </div>
+            
+            <!-- Artisan Info -->
+            {% if product.artisan %}
+                <div class="mb-6 p-4 bg-indiaOrange/10 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-2">Crafted by</p>
+                    <div class="flex items-center gap-4">
+                        {% if product.artisan.image %}
+                            <img src="{{ product.artisan.image.url }}" alt="{{ product.artisan.name }}" class="w-16 h-16 rounded-full object-cover">
+                        {% else %}
+                            <div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-gray-500 text-2xl"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h3 class="font-bold">
+                                <a href="{% url 'kalakriti:artisan_detail' product.artisan.slug %}" class="hover:text-indiaOrange">
+                                    {{ product.artisan.name }}
+                                </a>
+                            </h3>
+                            <p class="text-sm text-gray-600">{{ product.artisan.specialty }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Stock Status -->
+            <div class="mb-6">
+                {% if product.in_stock %}
+                    <p class="text-green-600 font-semibold flex items-center gap-2">
+                        <i class="fas fa-check-circle"></i> In Stock ({{ product.stock }} available)
+                    </p>
+                {% else %}
+                    <p class="text-red-600 font-semibold flex items-center gap-2">
+                        <i class="fas fa-times-circle"></i> Out of Stock
+                    </p>
+                {% endif %}
+            </div>
+            
+            <!-- Add to Cart -->
+            {% if product.in_stock %}
+                <div class="flex gap-4 mb-6">
+                    <button class="flex-1 px-6 py-3 bg-indiaOrange text-white rounded-lg hover:bg-orange-600 font-bold text-lg">
+                        <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
+                    </button>
+                    <button class="px-6 py-3 border-2 border-indiaOrange text-indiaOrange rounded-lg hover:bg-orange-50 font-bold">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                </div>
+            {% else %}
+                <button disabled class="w-full px-6 py-3 bg-gray-400 text-white rounded-lg font-bold text-lg mb-6">
+                    Out of Stock
+                </button>
+            {% endif %}
+            
+            <!-- Share -->
+            <div class="flex gap-4 items-center">
+                <span class="text-sm text-gray-600">Share:</span>
+                <a href="#" class="text-gray-600 hover:text-indiaOrange"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-gray-600 hover:text-indiaOrange"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-gray-600 hover:text-indiaOrange"><i class="fab fa-pinterest"></i></a>
+                <a href="#" class="text-gray-600 hover:text-indiaOrange"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Products -->
+    {% if related_products %}
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-8">Related <span class="text-indiaOrange">Products</span></h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for rel_product in related_products %}
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    {% if rel_product.image %}
+                        <img src="{{ rel_product.image.url }}" alt="{{ rel_product.name }}" class="w-full h-48 object-cover">
+                    {% else %}
+                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-image text-gray-400 text-4xl"></i>
+                        </div>
+                    {% endif %}
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg mb-2">
+                            <a href="{% url 'kalakriti:product_detail' rel_product.slug %}" class="hover:text-indiaOrange">
+                                {{ rel_product.name }}
+                            </a>
+                        </h3>
+                        <p class="text-indiaOrange font-bold text-lg">₹{{ rel_product.price }}</p>
+                        <a href="{% url 'kalakriti:product_detail' rel_product.slug %}" class="block w-full mt-3 px-4 py-2 bg-indiaOrange text-white rounded text-center hover:bg-orange-600">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

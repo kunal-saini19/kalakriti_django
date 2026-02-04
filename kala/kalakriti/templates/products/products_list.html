@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Products - KalaKriti{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-16">
+    <div class="flex flex-col md:flex-row gap-8">
+        <!-- Sidebar Filters -->
+        <aside class="md:w-64 flex-shrink-0">
+            <div class="bg-white rounded-lg shadow p-6 sticky top-20">
+                <h3 class="font-bold text-lg mb-4">Filters</h3>
+                
+                <!-- Search -->
+                <form method="GET" class="mb-6">
+                    <input
+                        type="text"
+                        name="q"
+                        value="{{ search_query }}"
+                        placeholder="Search products..."
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indiaOrange"
+                    >
+                    <button type="submit" class="w-full mt-2 px-3 py-2 bg-indiaOrange text-white rounded-lg hover:bg-orange-600 text-sm">
+                        Search
+                    </button>
+                </form>
+                
+                <!-- Category Filter -->
+                <div class="mb-6">
+                    <h4 class="font-semibold mb-3">Categories</h4>
+                    <div class="space-y-2">
+                        <a href="{% url 'kalakriti:products_list' %}" class="block text-sm hover:text-indiaOrange {% if not selected_category %}font-bold text-indiaOrange{% endif %}">
+                            All Categories
+                        </a>
+                        {% for category in categories %}
+                        <a href="?category={{ category.slug }}" class="block text-sm hover:text-indiaOrange {% if selected_category == category.slug %}font-bold text-indiaOrange{% endif %}">
+                            {{ category.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Region Filter -->
+                <div class="mb-6">
+                    <h4 class="font-semibold mb-3">Regions</h4>
+                    <div class="space-y-2">
+                        <a href="{% url 'kalakriti:products_list' %}" class="block text-sm hover:text-indiaOrange {% if not selected_region %}font-bold text-indiaOrange{% endif %}">
+                            All Regions
+                        </a>
+                        {% for region in regions %}
+                        <a href="?region={{ region.slug }}" class="block text-sm hover:text-indiaOrange {% if selected_region == region.slug %}font-bold text-indiaOrange{% endif %}">
+                            {{ region.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Products Grid -->
+        <main class="flex-1">
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold mb-2">Products</h1>
+                <p class="text-gray-600">
+                    {% if search_query %}
+                        Showing results for "{{ search_query }}"
+                    {% elif selected_category %}
+                        Showing products from selected category
+                    {% elif selected_region %}
+                        Showing products from selected region
+                    {% else %}
+                        Explore our collection
+                    {% endif %}
+                    <span class="font-bold">({{ products.count }} items)</span>
+                </p>
+            </div>
+            
+            {% if products %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for product in products %}
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+                        {% else %}
+                            <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image text-gray-400 text-4xl"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="p-4">
+                            <h3 class="font-bold text-lg mb-2">
+                                <a href="{% url 'kalakriti:product_detail' product.slug %}" class="hover:text-indiaOrange">
+                                    {{ product.name }}
+                                </a>
+                            </h3>
+                            
+                            {% if product.category %}
+                                <p class="text-gray-500 text-sm mb-2">{{ product.category.name }}</p>
+                            {% endif %}
+                            
+                            <p class="text-gray-600 text-sm mb-3">{{ product.description|truncatewords:15 }}</p>
+                            
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    {% if product.original_price %}
+                                        <p class="text-indiaOrange font-bold text-lg">₹{{ product.price }}</p>
+                                        <p class="text-gray-400 line-through text-sm">₹{{ product.original_price }}</p>
+                                    {% else %}
+                                        <p class="text-indiaOrange font-bold text-lg">₹{{ product.price }}</p>
+                                    {% endif %}
+                                </div>
+                                {% if product.rating %}
+                                    <div class="flex items-center gap-1">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= product.rating %}
+                                                <i class="fas fa-star text-yellow-400"></i>
+                                            {% else %}
+                                                <i class="fas fa-star text-gray-300"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="text-xs text-gray-600">({{ product.reviews_count }})</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if product.in_stock %}
+                                <button class="w-full px-4 py-2 bg-indiaOrange text-white rounded-lg hover:bg-orange-600 font-medium mb-2">
+                                    <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
+                                </button>
+                                <a href="{% url 'kalakriti:product_detail' product.slug %}" class="block w-full px-4 py-2 border border-indiaOrange text-indiaOrange rounded-lg text-center hover:bg-orange-50">
+                                    View Details
+                                </a>
+                            {% else %}
+                                <button disabled class="w-full px-4 py-2 bg-gray-300 text-gray-600 rounded-lg font-medium">
+                                    Out of Stock
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-16">
+                    <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-600 text-lg mb-4">No products found</p>
+                    <a href="{% url 'kalakriti:products_list' %}" class="px-6 py-2 bg-indiaOrange text-white rounded-lg hover:bg-orange-600">
+                        Clear Filters
+                    </a>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}

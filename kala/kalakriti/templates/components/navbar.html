@@ -1,0 +1,80 @@
+<nav class="bg-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center">
+            <a href="{% url 'kalakriti:home' %}" class="flex items-center gap-2">
+                <i class="fas fa-palette text-2xl text-indiaOrange"></i>
+                <span class="text-xl font-bold">KalaKriti</span>
+            </a>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="hidden md:flex flex-1 max-w-md mx-8">
+            <form method="GET" action="{% url 'kalakriti:products_list' %}" class="w-full flex">
+                <input 
+                    type="text" 
+                    name="q" 
+                    placeholder="Search products, artisans..." 
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indiaOrange"
+                >
+                <button type="submit" class="bg-indiaOrange text-white px-4 py-2 rounded-r-lg hover:bg-orange-600">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+        
+        <!-- Menu Items -->
+        <div class="hidden md:flex items-center gap-6">
+            <a href="{% url 'kalakriti:home' %}" class="hover:text-indiaOrange">Home</a>
+            <a href="{% url 'kalakriti:products_list' %}" class="hover:text-indiaOrange">Products</a>
+            <a href="{% url 'kalakriti:artisans_list' %}" class="hover:text-indiaOrange">Artisans</a>
+            <a href="{% url 'kalakriti:regions_list' %}" class="hover:text-indiaOrange">Regions</a>
+            <a href="{% url 'kalakriti:gallery' %}" class="hover:text-indiaOrange">Gallery</a>
+            
+            {% if user.is_authenticated %}
+                <div class="relative group">
+                    <button class="flex items-center gap-2 hover:text-indiaOrange">
+                        <i class="fas fa-user"></i>
+                        {{ user.email }}
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg hidden group-hover:block">
+                        <a href="{% url 'kalakriti:private' %}" class="block px-4 py-2 hover:bg-gray-100">Dashboard</a>
+                        <a href="{% url 'kalakriti:logout' %}" class="block px-4 py-2 hover:bg-gray-100 text-red-600">Logout</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'kalakriti:login' %}" class="px-4 py-2 border border-indiaOrange text-indiaOrange rounded-lg hover:bg-orange-50">Login</a>
+                <a href="{% url 'kalakriti:register' %}" class="px-4 py-2 bg-indiaOrange text-white rounded-lg hover:bg-orange-600">Sign Up</a>
+            {% endif %}
+        </div>
+        
+        <!-- Mobile Menu Button -->
+        <button class="md:hidden text-2xl" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+    
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-200 px-4 py-4">
+        <a href="{% url 'kalakriti:home' %}" class="block py-2 hover:text-indiaOrange">Home</a>
+        <a href="{% url 'kalakriti:products_list' %}" class="block py-2 hover:text-indiaOrange">Products</a>
+        <a href="{% url 'kalakriti:artisans_list' %}" class="block py-2 hover:text-indiaOrange">Artisans</a>
+        <a href="{% url 'kalakriti:regions_list' %}" class="block py-2 hover:text-indiaOrange">Regions</a>
+        <a href="{% url 'kalakriti:gallery' %}" class="block py-2 hover:text-indiaOrange">Gallery</a>
+        
+        {% if user.is_authenticated %}
+            <a href="{% url 'kalakriti:private' %}" class="block py-2 hover:text-indiaOrange">Dashboard</a>
+            <a href="{% url 'kalakriti:logout' %}" class="block py-2 text-red-600 hover:text-red-700">Logout</a>
+        {% else %}
+            <a href="{% url 'kalakriti:login' %}" class="block py-2 hover:text-indiaOrange">Login</a>
+            <a href="{% url 'kalakriti:register' %}" class="block py-2 hover:text-indiaOrange">Sign Up</a>
+        {% endif %}
+    </div>
+</nav>
+
+<script>
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    menu.classList.toggle('hidden');
+}
+</script>
