@@ -35,4 +35,12 @@ urlpatterns = [
     
     # Newsletter
     path('subscribe/', views.newsletter_subscribe, name='newsletter_subscribe'),
+    
+    # Seller Routes
+    path('seller/setup/', views.seller_setup, name='seller_setup'),
+    path('seller/dashboard/', views.seller_dashboard, name='seller_dashboard'),
+    path('seller/bulk-upload/', views.add_bulk_products, name='bulk_upload'),
+    path('seller/products/', views.seller_products, name='seller_products'),
+    path('seller/activity/', views.seller_activity, name='seller_activity'),
+    path('seller/analytics/', views.seller_analytics, name='seller_analytics'),
 ]

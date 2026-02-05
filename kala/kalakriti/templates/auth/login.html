@@ -3,95 +3,112 @@
 {% block title %}Login - KalaKriti{% endblock %}
 
 {% block content %}
-<div class="min-h-[calc(100vh-200px)] flex items-center justify-center bg-gray-50 px-4">
-    <div class="w-full max-w-md">
-        <div class="bg-white rounded-lg shadow-lg p-8">
-            <div class="text-center mb-8">
-                <i class="fas fa-palette text-4xl text-indiaOrange mb-4"></i>
-                <h1 class="text-2xl font-bold">Welcome Back</h1>
-                <p class="text-gray-600 mt-2">Sign in to your account</p>
+<div class="min-h-[calc(100vh-200px)] bg-gradient-to-br from-orange-50 to-white py-12 px-4">
+    <div class="max-w-md mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-block bg-indiaOrange text-white p-4 rounded-full mb-4">
+                <i class="fas fa-palette text-3xl"></i>
             </div>
-            
+            <h1 class="text-3xl font-bold text-gray-800">Welcome Back</h1>
+            <p class="text-gray-600 mt-2">Sign in to your KalaKriti account</p>
+        </div>
+        
+        <!-- Card -->
+        <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-indiaOrange">
+            <!-- Messages -->
             {% if messages %}
                 {% for message in messages %}
-                <div class="mb-4 p-3 rounded-lg {% if message.tags %}{{ message.tags }}{% else %}bg-red-100 text-red-800{% endif %}">
-                    {{ message }}
+                <div class="mb-4 p-4 rounded-lg {% if message.tags %}{{ message.tags }}{% else %}bg-blue-100 text-blue-800{% endif %} flex items-start">
+                    <i class="fas fa-info-circle mr-3 mt-0.5"></i>
+                    <span>{{ message }}</span>
                 </div>
                 {% endfor %}
             {% endif %}
             
-            <form method="POST" class="space-y-4">
+            <!-- Login Form -->
+            <form method="POST" class="space-y-5">
                 {% csrf_token %}
                 
+                <!-- Email -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Email Address
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-envelope text-indiaOrange mr-2"></i>Email Address
                     </label>
                     <input
                         type="email"
                         name="email"
                         placeholder="you@example.com"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indiaOrange"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange transition"
                         required
+                        autofocus
                     >
                 </div>
                 
+                <!-- Password -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Password
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-lock text-indiaOrange mr-2"></i>Password
                     </label>
                     <input
                         type="password"
                         name="password"
-                        placeholder="••••••••"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indiaOrange"
+                        placeholder="Enter your password"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange transition"
                         required
                     >
                 </div>
                 
+                <!-- Remember & Forgot -->
                 <div class="flex items-center justify-between text-sm">
-                    <label class="flex items-center">
-                        <input type="checkbox" name="remember" class="rounded">
-                        <span class="ml-2 text-gray-600">Remember me</span>
+                    <label class="flex items-center text-gray-600 cursor-pointer hover:text-indiaOrange">
+                        <input type="checkbox" name="remember" class="rounded mr-2">
+                        <span>Remember me</span>
                     </label>
-                    <a href="{% url 'kalakriti:forgot_password' %}" class="text-indiaOrange hover:font-bold">
+                    <a href="{% url 'kalakriti:forgot_password' %}" class="text-indiaOrange font-semibold hover:underline">
                         Forgot password?
                     </a>
                 </div>
                 
+                <!-- Submit Button -->
                 <button
                     type="submit"
-                    class="w-full py-2 bg-indiaOrange text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                    class="w-full py-3 bg-gradient-to-r from-indiaOrange to-orange-500 text-white rounded-lg font-bold hover:shadow-lg transition transform hover:scale-105"
                 >
-                    Sign In
+                    <i class="fas fa-sign-in-alt mr-2"></i>Sign In
                 </button>
             </form>
             
+            <!-- Divider -->
+            <div class="my-6 flex items-center">
+                <div class="flex-1 border-t border-gray-300"></div>
+                <span class="px-3 text-gray-500 text-sm">OR</span>
+                <div class="flex-1 border-t border-gray-300"></div>
+            </div>
+            
+            <!-- GitHub Login -->
+            <button
+                type="button"
+                class="w-full py-3 border-2 border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:border-indiaOrange hover:bg-orange-50 transition font-semibold"
+            >
+                <i class="fab fa-github text-xl"></i>
+                Continue with GitHub
+            </button>
+            
+            <!-- Sign Up Link -->
             <div class="mt-6 text-center">
                 <p class="text-gray-600">
                     Don't have an account?
-                    <a href="{% url 'kalakriti:register' %}" class="text-indiaOrange hover:font-bold">
-                        Sign up
+                    <a href="{% url 'kalakriti:register' %}" class="text-indiaOrange font-bold hover:underline">
+                        Create one now
                     </a>
                 </p>
             </div>
-            
-            <div class="mt-6 relative">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-300"></div>
-                </div>
-                <div class="relative flex justify-center text-sm">
-                    <span class="px-2 bg-white text-gray-500">Or continue with</span>
-                </div>
-            </div>
-            
-            <button
-                type="button"
-                class="w-full mt-4 py-2 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
-            >
-                <i class="fab fa-github"></i>
-                GitHub
-            </button>
+        </div>
+        
+        <!-- Info Box -->
+        <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded text-sm text-blue-800">
+            <p><i class="fas fa-info-circle mr-2"></i><strong>New to KalaKriti?</strong> Sign up to explore authentic Indian crafts and support artisans.</p>
         </div>
     </div>
 </div>

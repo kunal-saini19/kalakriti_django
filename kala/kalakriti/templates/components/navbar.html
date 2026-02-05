@@ -33,18 +33,45 @@
             
             {% if user.is_authenticated %}
                 <div class="relative group">
-                    <button class="flex items-center gap-2 hover:text-indiaOrange">
+                    <button class="flex items-center gap-2 hover:text-indiaOrange bg-indiaOrange text-white px-4 py-2 rounded-lg">
                         <i class="fas fa-user"></i>
-                        {{ user.email }}
+                        {{ user.first_name|default:user.email }}
+                        <i class="fas fa-chevron-down text-xs"></i>
                     </button>
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg hidden group-hover:block">
-                        <a href="{% url 'kalakriti:private' %}" class="block px-4 py-2 hover:bg-gray-100">Dashboard</a>
-                        <a href="{% url 'kalakriti:logout' %}" class="block px-4 py-2 hover:bg-gray-100 text-red-600">Logout</a>
+                    <div class="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50">
+                        {% if user.profile.user_type == 'seller' %}
+                            <div class="px-4 py-3 border-b border-gray-100 font-semibold text-gray-800">
+                                <i class="fas fa-store text-indiaOrange mr-2"></i>Seller Dashboard
+                            </div>
+                            <a href="{% url 'kalakriti:seller_dashboard' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700">
+                                <i class="fas fa-chart-line text-indiaOrange mr-2"></i>Dashboard
+                            </a>
+                            <a href="{% url 'kalakriti:bulk_upload' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700">
+                                <i class="fas fa-plus text-indiaOrange mr-2"></i>Add Products
+                            </a>
+                            <a href="{% url 'kalakriti:seller_products' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700">
+                                <i class="fas fa-boxes text-indiaOrange mr-2"></i>My Products
+                            </a>
+                            <a href="{% url 'kalakriti:seller_analytics' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700">
+                                <i class="fas fa-chart-bar text-indiaOrange mr-2"></i>Analytics
+                            </a>
+                            <hr class="my-2">
+                        {% else %}
+                            <div class="px-4 py-3 border-b border-gray-100 font-semibold text-gray-800">
+                                <i class="fas fa-shopping-bag text-indiaOrange mr-2"></i>Buyer Menu
+                            </div>
+                            <a href="{% url 'kalakriti:private' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700">
+                                <i class="fas fa-user text-indiaOrange mr-2"></i>My Account
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'kalakriti:logout' %}" class="block px-4 py-3 hover:bg-red-50 text-red-600 border-t border-gray-100">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
                     </div>
                 </div>
             {% else %}
-                <a href="{% url 'kalakriti:login' %}" class="px-4 py-2 border border-indiaOrange text-indiaOrange rounded-lg hover:bg-orange-50">Login</a>
-                <a href="{% url 'kalakriti:register' %}" class="px-4 py-2 bg-indiaOrange text-white rounded-lg hover:bg-orange-600">Sign Up</a>
+                <a href="{% url 'kalakriti:login' %}" class="px-4 py-2 border-2 border-indiaOrange text-indiaOrange rounded-lg hover:bg-orange-50 font-semibold transition">Login</a>
+                <a href="{% url 'kalakriti:register' %}" class="px-4 py-2 bg-indiaOrange text-white rounded-lg hover:bg-orange-600 font-semibold transition">Sign Up</a>
             {% endif %}
         </div>
         
@@ -63,11 +90,23 @@
         <a href="{% url 'kalakriti:gallery' %}" class="block py-2 hover:text-indiaOrange">Gallery</a>
         
         {% if user.is_authenticated %}
-            <a href="{% url 'kalakriti:private' %}" class="block py-2 hover:text-indiaOrange">Dashboard</a>
-            <a href="{% url 'kalakriti:logout' %}" class="block py-2 text-red-600 hover:text-red-700">Logout</a>
+            <div class="border-t border-gray-200 pt-4">
+                <p class="text-sm text-gray-600 font-semibold mb-3">{{ user.first_name|default:user.email }}</p>
+                {% if user.profile.user_type == 'seller' %}
+                    <a href="{% url 'kalakriti:seller_dashboard' %}" class="block py-2 hover:text-indiaOrange"><i class="fas fa-chart-line mr-2"></i>Seller Dashboard</a>
+                    <a href="{% url 'kalakriti:bulk_upload' %}" class="block py-2 hover:text-indiaOrange"><i class="fas fa-plus mr-2"></i>Add Products</a>
+                    <a href="{% url 'kalakriti:seller_products' %}" class="block py-2 hover:text-indiaOrange"><i class="fas fa-boxes mr-2"></i>My Products</a>
+                    <a href="{% url 'kalakriti:seller_analytics' %}" class="block py-2 hover:text-indiaOrange"><i class="fas fa-chart-bar mr-2"></i>Analytics</a>
+                {% else %}
+                    <a href="{% url 'kalakriti:private' %}" class="block py-2 hover:text-indiaOrange"><i class="fas fa-user mr-2"></i>My Account</a>
+                {% endif %}
+            </div>
+            <a href="{% url 'kalakriti:logout' %}" class="block py-2 text-red-600 hover:text-red-700 border-t border-gray-200 mt-4 pt-4"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
         {% else %}
-            <a href="{% url 'kalakriti:login' %}" class="block py-2 hover:text-indiaOrange">Login</a>
-            <a href="{% url 'kalakriti:register' %}" class="block py-2 hover:text-indiaOrange">Sign Up</a>
+            <div class="flex gap-3 pt-4 border-t border-gray-200">
+                <a href="{% url 'kalakriti:login' %}" class="flex-1 text-center py-2 border-2 border-indiaOrange text-indiaOrange rounded-lg hover:bg-orange-50 font-semibold">Login</a>
+                <a href="{% url 'kalakriti:register' %}" class="flex-1 text-center py-2 bg-indiaOrange text-white rounded-lg hover:bg-orange-600 font-semibold">Sign Up</a>
+            </div>
         {% endif %}
     </div>
 </nav>

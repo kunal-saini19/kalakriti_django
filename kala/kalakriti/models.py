@@ -3,6 +3,105 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 import uuid
 
+
+class UserProfile(models.Model):
+    """Extended User Profile for Buyer/Seller"""
+    USER_TYPE_CHOICES = [
+        ('buyer', 'Buyer'),
+        ('seller', 'Seller'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='buyer')
+    phone = models.CharField(max_length=20, blank=True)
+    address = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    pincode = models.CharField(max_length=10, blank=True)
+    profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.get_user_type_display()}"
+    
+    class Meta:
+        verbose_name_plural = 'User Profiles'
+
+
+class Seller(models.Model):
+    """Seller Profile for Product Management"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='seller_profile')
+    shop_name = models.CharField(max_length=200)
+    shop_description = models.TextField(blank=True)
+    shop_logo = models.ImageField(upload_to='shop_logos/', blank=True, null=True)
+    region = models.ForeignKey('Region', on_delete=models.SET_NULL, null=True, blank=True, related_name='sellers')
+    phone = models.CharField(max_length=20)
+    bank_account = models.CharField(max_length=20, blank=True)
+    bank_name = models.CharField(max_length=100, blank=True)
+    ifsc_code = models.CharField(max_length=11, blank=True)
+    total_products = models.IntegerField(default=0)
+    total_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    rating = models.FloatField(default=0)
+    is_verified = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.shop_name
+    
+    class Meta:
+        ordering = ['-created_at']
+
+
+class SellerProduct(models.Model):
+    """Seller-specific Product with seller tracking"""
+    seller = models.ForeignKey(Seller, on_delete=models.CASCADE, related_name='seller_products')
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='seller_products')
+    seller_sku = models.CharField(max_length=100, unique=True)
+    seller_price = models.DecimalField(max_digits=10, decimal_places=2)
+    seller_stock = models.IntegerField(default=0)
+    added_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.seller.shop_name} - {self.product.name}"
+    
+    class Meta:
+        unique_together = ('seller', 'product')
+        ordering = ['-added_at']
+
+
+class ProductActivity(models.Model):
+    """Track product activities - views, clicks, sales"""
+    ACTIVITY_TYPES = [
+        ('view', 'Product Viewed'),
+        ('click', 'Product Clicked'),
+        ('add_cart', 'Added to Cart'),
+        ('purchase', 'Purchased'),
+        ('review', 'Review Added'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    seller = models.ForeignKey(Seller, on_delete=models.CASCADE, related_name='activities')
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='activities')
+    activity_type = models.CharField(max_length=20, choices=ACTIVITY_TYPES)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    details = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.seller.shop_name} - {self.get_activity_type_display()}"
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['seller', '-created_at']),
+            models.Index(fields=['product', '-created_at']),
+        ]
+
+
 class Category(models.Model):
     """Product Category Model"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -71,6 +170,7 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
     region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     artisan = models.ForeignKey(Artisan, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
+    seller = models.ForeignKey(Seller, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     price = models.DecimalField(max_digits=10, decimal_places=2)
     original_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     stock = models.IntegerField(default=0)

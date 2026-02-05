@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Activity Log - {{ seller.shop_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-200px)] bg-gray-50 py-8 px-4">
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800">Activity Log</h1>
+                    <p class="text-gray-600 mt-1">Track all customer interactions with your products</p>
+                </div>
+            </div>
+
+            <!-- Seller Tabs Navigation -->
+            <div class="flex gap-4 border-b-2 border-gray-200 flex-wrap">
+                <a href="{% url 'kalakriti:seller_dashboard' %}" class="pb-2 text-gray-600 font-semibold hover:text-indiaOrange">
+                    <i class="fas fa-chart-line mr-2"></i>Dashboard
+                </a>
+                <a href="{% url 'kalakriti:seller_products' %}" class="pb-2 text-gray-600 font-semibold hover:text-indiaOrange">
+                    <i class="fas fa-boxes mr-2"></i>Products
+                </a>
+                <a href="{% url 'kalakriti:seller_activity' %}" class="pb-2 border-b-4 border-indiaOrange text-indiaOrange font-semibold">
+                    <i class="fas fa-history mr-2"></i>Activity
+                </a>
+                <a href="{% url 'kalakriti:seller_analytics' %}" class="pb-2 text-gray-600 font-semibold hover:text-indiaOrange">
+                    <i class="fas fa-chart-bar mr-2"></i>Analytics
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="mb-6 flex gap-3 flex-wrap">
+            <a href="{% url 'kalakriti:seller_activity' %}" class="
+                px-4 py-2 rounded-lg font-semibold transition
+                {% if not activity_type %}bg-indiaOrange text-white{% else %}bg-white text-gray-800 border border-gray-300 hover:border-indiaOrange{% endif %}
+            ">
+                All Activities
+            </a>
+            {% for key, label in activity_types %}
+            <a href="?type={{ key }}" class="
+                px-4 py-2 rounded-lg font-semibold transition
+                {% if activity_type == key %}bg-indiaOrange text-white{% else %}bg-white text-gray-800 border border-gray-300 hover:border-indiaOrange{% endif %}
+            ">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Activity Timeline -->
+        <div class="space-y-3">
+            {% if activities %}
+                {% for activity in activities %}
+                <div class="bg-white rounded-lg shadow p-6 border-l-4 {% if activity.activity_type == 'view' %}border-blue-500{% elif activity.activity_type == 'purchase' %}border-green-500{% elif activity.activity_type == 'add_cart' %}border-yellow-500{% else %}border-gray-400{% endif %}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start gap-4 flex-1">
+                            <!-- Icon -->
+                            <div class="
+                                text-2xl mt-1
+                                {% if activity.activity_type == 'view' %}text-blue-500
+                                {% elif activity.activity_type == 'purchase' %}text-green-500
+                                {% elif activity.activity_type == 'add_cart' %}text-yellow-500
+                                {% else %}text-gray-500
+                                {% endif %}
+                            ">
+                                {% if activity.activity_type == 'view' %}
+                                    <i class="fas fa-eye"></i>
+                                {% elif activity.activity_type == 'purchase' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif activity.activity_type == 'add_cart' %}
+                                    <i class="fas fa-cart-plus"></i>
+                                {% elif activity.activity_type == 'click' %}
+                                    <i class="fas fa-mouse"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                {% endif %}
+                            </div>
+
+                            <!-- Content -->
+                            <div class="flex-1">
+                                <h3 class="font-bold text-gray-800 text-lg">
+                                    {{ activity.get_activity_type_display }}
+                                </h3>
+                                <p class="text-gray-600 mt-1">
+                                    <strong>Product:</strong> {{ activity.product.name }}
+                                </p>
+                                {% if activity.user %}
+                                <p class="text-gray-600">
+                                    <strong>Customer:</strong> {{ activity.user.get_full_name|default:activity.user.email }}
+                                </p>
+                                {% endif %}
+                                {% if activity.details %}
+                                <p class="text-gray-600 mt-1">
+                                    <strong>Details:</strong> {{ activity.details|safe }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Timestamp -->
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600 font-semibold">
+                                {{ activity.created_at|date:"M d, Y" }}
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                {{ activity.created_at|time:"H:i" }}
+                            </p>
+                            <p class="text-xs text-indiaOrange mt-1">
+                                {{ activity.created_at|timesince }} ago
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if activities.has_other_pages %}
+                <div class="flex justify-center gap-2 mt-8">
+                    {% if activities.has_previous %}
+                    <a href="?page=1{% if activity_type %}&type={{ activity_type }}{% endif %}" class="px-4 py-2 border border-gray-300 rounded-lg hover:border-indiaOrange">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <a href="?page={{ activities.previous_page_number }}{% if activity_type %}&type={{ activity_type }}{% endif %}" class="px-4 py-2 border border-gray-300 rounded-lg hover:border-indiaOrange">
+                        Previous
+                    </a>
+                    {% endif %}
+
+                    <span class="px-4 py-2 bg-indiaOrange text-white rounded-lg">
+                        Page {{ activities.number }} of {{ activities.paginator.num_pages }}
+                    </span>
+
+                    {% if activities.has_next %}
+                    <a href="?page={{ activities.next_page_number }}{% if activity_type %}&type={{ activity_type }}{% endif %}" class="px-4 py-2 border border-gray-300 rounded-lg hover:border-indiaOrange">
+                        Next
+                    </a>
+                    <a href="?page={{ activities.paginator.num_pages }}{% if activity_type %}&type={{ activity_type }}{% endif %}" class="px-4 py-2 border border-gray-300 rounded-lg hover:border-indiaOrange">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+            <div class="bg-white rounded-lg shadow p-12 text-center">
+                <i class="fas fa-history text-6xl text-gray-300 mb-4 block"></i>
+                <p class="text-gray-600 text-lg">No activities yet</p>
+                <p class="text-gray-500">Customer interactions will appear here</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
