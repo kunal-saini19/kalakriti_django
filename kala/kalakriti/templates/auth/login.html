@@ -16,15 +16,7 @@
         
         <!-- Card -->
         <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-indiaOrange">
-            <!-- Messages -->
-            {% if messages %}
-                {% for message in messages %}
-                <div class="mb-4 p-4 rounded-lg {% if message.tags %}{{ message.tags }}{% else %}bg-blue-100 text-blue-800{% endif %} flex items-start">
-                    <i class="fas fa-info-circle mr-3 mt-0.5"></i>
-                    <span>{{ message }}</span>
-                </div>
-                {% endfor %}
-            {% endif %}
+            <!-- Messages handled globally in base.html -->
             
             <!-- Login Form -->
             <form method="POST" class="space-y-5">
@@ -42,6 +34,7 @@
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange transition"
                         required
                         autofocus
+                        autocomplete="email"
                     >
                 </div>
                 
@@ -56,13 +49,17 @@
                         placeholder="Enter your password"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange transition"
                         required
+                        autocomplete="current-password"
                     >
+                    <p class="text-xs text-gray-500 mt-1">
+                        Use your verified email account password.
+                    </p>
                 </div>
                 
                 <!-- Remember & Forgot -->
                 <div class="flex items-center justify-between text-sm">
                     <label class="flex items-center text-gray-600 cursor-pointer hover:text-indiaOrange">
-                        <input type="checkbox" name="remember" class="rounded mr-2">
+                        <input type="checkbox" name="remember" class="rounded mr-2" checked>
                         <span>Remember me</span>
                     </label>
                     <a href="{% url 'kalakriti:forgot_password' %}" class="text-indiaOrange font-semibold hover:underline">
@@ -73,7 +70,7 @@
                 <!-- Submit Button -->
                 <button
                     type="submit"
-                    class="w-full py-3 bg-gradient-to-r from-indiaOrange to-orange-500 text-white rounded-lg font-bold hover:shadow-lg transition transform hover:scale-105"
+                    class="w-full py-3 bg-indiaOrange text-white rounded-lg font-bold hover:bg-orange-600 hover:shadow-lg transition"
                 >
                     <i class="fas fa-sign-in-alt mr-2"></i>Sign In
                 </button>

@@ -114,10 +114,13 @@
             
             <!-- Add to Cart -->
             {% if product.in_stock %}
-                <div class="flex gap-4 mb-6">
-                    <button class="flex-1 px-6 py-3 bg-indiaOrange text-white rounded-lg hover:bg-orange-600 font-bold text-lg">
-                        <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
-                    </button>
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <form method="POST" action="{% url 'kalakriti:add_to_cart' product.id %}" class="flex-1">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full px-6 py-3 bg-indiaOrange text-white rounded-lg hover:bg-orange-600 font-bold text-lg">
+                            <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
+                        </button>
+                    </form>
                     <button class="px-6 py-3 border-2 border-indiaOrange text-indiaOrange rounded-lg hover:bg-orange-50 font-bold">
                         <i class="fas fa-heart"></i>
                     </button>

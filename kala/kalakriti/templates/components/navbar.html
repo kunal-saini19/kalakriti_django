@@ -10,7 +10,7 @@
         
         <!-- Search Bar -->
         <div class="hidden md:flex flex-1 max-w-md mx-8">
-            <form method="GET" action="{% url 'kalakriti:products_list' %}" class="w-full flex">
+            <form method="GET" action="{% url 'kalakriti:search_all' %}" class="w-full flex">
                 <input 
                     type="text" 
                     name="q" 
@@ -30,6 +30,9 @@
             <a href="{% url 'kalakriti:artisans_list' %}" class="hover:text-indiaOrange">Artisans</a>
             <a href="{% url 'kalakriti:regions_list' %}" class="hover:text-indiaOrange">Regions</a>
             <a href="{% url 'kalakriti:gallery' %}" class="hover:text-indiaOrange">Gallery</a>
+            <a href="{% url 'kalakriti:cart' %}" class="hover:text-indiaOrange">
+                <i class="fas fa-shopping-cart mr-1"></i>Cart
+            </a>
             
             {% if user.is_authenticated %}
                 <div class="relative group">
@@ -76,7 +79,7 @@
         </div>
         
         <!-- Mobile Menu Button -->
-        <button class="md:hidden text-2xl" onclick="toggleMobileMenu()">
+        <button class="md:hidden text-2xl" type="button" onclick="toggleMobileMenu()">
             <i class="fas fa-bars"></i>
         </button>
     </div>
@@ -88,6 +91,9 @@
         <a href="{% url 'kalakriti:artisans_list' %}" class="block py-2 hover:text-indiaOrange">Artisans</a>
         <a href="{% url 'kalakriti:regions_list' %}" class="block py-2 hover:text-indiaOrange">Regions</a>
         <a href="{% url 'kalakriti:gallery' %}" class="block py-2 hover:text-indiaOrange">Gallery</a>
+        <a href="{% url 'kalakriti:cart' %}" class="block py-2 hover:text-indiaOrange">
+            <i class="fas fa-shopping-cart mr-2"></i>Cart
+        </a>
         
         {% if user.is_authenticated %}
             <div class="border-t border-gray-200 pt-4">

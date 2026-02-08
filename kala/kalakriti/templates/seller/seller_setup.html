@@ -13,13 +13,7 @@
 
         <!-- Setup Form -->
         <div class="bg-white rounded-lg shadow-xl p-8">
-            {% if messages %}
-                {% for message in messages %}
-                <div class="mb-4 p-3 rounded-lg {% if message.tags %}{{ message.tags }}{% else %}bg-red-100 text-red-800{% endif %}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            {% endif %}
+            <!-- Messages handled globally in base.html -->
 
             <form method="POST" class="space-y-6">
                 {% csrf_token %}
@@ -97,7 +91,7 @@
                 <div class="flex gap-4 pt-4">
                     <button
                         type="submit"
-                        class="flex-1 bg-gradient-to-r from-indiaOrange to-orange-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition"
+                        class="flex-1 bg-indiaOrange text-white py-3 rounded-lg font-semibold hover:bg-orange-600 hover:shadow-lg transition"
                     >
                         <i class="fas fa-check mr-2"></i>Create Shop
                     </button>

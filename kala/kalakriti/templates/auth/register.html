@@ -16,15 +16,7 @@
         
         <!-- Card -->
         <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-indiaOrange">
-            <!-- Messages -->
-            {% if messages %}
-                {% for message in messages %}
-                <div class="mb-4 p-4 rounded-lg {% if message.tags %}{{ message.tags }}{% else %}bg-blue-100 text-blue-800{% endif %} flex items-start">
-                    <i class="fas fa-info-circle mr-3 mt-0.5"></i>
-                    <span>{{ message }}</span>
-                </div>
-                {% endfor %}
-            {% endif %}
+            <!-- Messages handled globally in base.html -->
             
             <!-- Sign Up Form -->
             <form method="POST" class="space-y-5">
@@ -81,6 +73,11 @@
                         name="first_name"
                         placeholder="Your full name"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange transition"
+                        required
+                        autocomplete="name"
+                        pattern="^[A-Za-z][A-Za-z\s'.-]+[A-Za-z]$"
+                        title="Use letters and spaces only (no numbers)."
+                        value="{{ request.POST.first_name|default:'' }}"
                     >
                 </div>
                 
@@ -95,6 +92,10 @@
                         placeholder="you@example.com"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange transition"
                         required
+                        autocomplete="email"
+                        pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$"
+                        title="Enter a valid email like name@example.com"
+                        value="{{ request.POST.email|default:'' }}"
                     >
                 </div>
                 
@@ -109,9 +110,12 @@
                         placeholder="Enter password (min 8 characters)"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange transition"
                         required
+                        minlength="8"
+                        pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$"
+                        autocomplete="new-password"
                     >
                     <p class="text-xs text-gray-500 mt-1">
-                        <i class="fas fa-info-circle mr-1"></i>At least 8 characters recommended
+                        <i class="fas fa-info-circle mr-1"></i>At least 8 characters, include letters, numbers, and a symbol
                     </p>
                 </div>
                 
@@ -126,6 +130,8 @@
                         placeholder="Re-enter your password"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange transition"
                         required
+                        minlength="8"
+                        autocomplete="new-password"
                     >
                 </div>
                 
@@ -145,14 +151,28 @@
                         <a href="#" class="text-indiaOrange font-semibold hover:underline">Privacy Policy</a>
                     </label>
                 </div>
+
+                <div id="signupRequirements" class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                    <p class="font-semibold mb-2">Complete these to enable sign up:</p>
+                    <ul class="space-y-1">
+                        <li id="reqName" class="flex items-center gap-2"><i class="fas fa-circle text-xs text-gray-400"></i>Full name (2+ characters)</li>
+                        <li id="reqEmail" class="flex items-center gap-2"><i class="fas fa-circle text-xs text-gray-400"></i>Valid email address</li>
+                        <li id="reqPassword" class="flex items-center gap-2"><i class="fas fa-circle text-xs text-gray-400"></i>Password: 8+ chars, letters, numbers, symbol</li>
+                        <li id="reqMatch" class="flex items-center gap-2"><i class="fas fa-circle text-xs text-gray-400"></i>Passwords match</li>
+                        <li id="reqTerms" class="flex items-center gap-2"><i class="fas fa-circle text-xs text-gray-400"></i>Accept terms</li>
+                    </ul>
+                </div>
                 
                 <!-- Submit Button -->
                 <button
                     type="submit"
-                    class="w-full py-3 bg-gradient-to-r from-indiaOrange to-orange-500 text-white rounded-lg font-bold hover:shadow-lg transition transform hover:scale-105"
+                    id="signupButton"
+                    disabled
+                    class="w-full py-3 bg-indiaOrange text-white rounded-lg font-bold hover:bg-orange-600 hover:shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                     <i class="fas fa-user-plus mr-2"></i>Create Account
                 </button>
+                <p class="text-xs text-gray-500 text-center">If signup fails, the exact reason will appear above.</p>
             </form>
             
             <!-- Divider -->
@@ -214,7 +234,43 @@
         radio.addEventListener('change', updateUserTypeSelection);
     });
 
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', updateUserTypeSelection);
+    function validateSignupForm() {
+        const name = document.querySelector('input[name="first_name"]').value.trim();
+        const email = document.querySelector('input[name="email"]').value.trim();
+        const password = document.querySelector('input[name="password"]').value;
+        const confirm = document.querySelector('input[name="password_confirm"]').value;
+        const terms = document.querySelector('input[name="terms"]').checked;
+
+        const passwordOk = password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password) && /[^A-Za-z\d]/.test(password);
+        const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+        const nameOk = name.length >= 2 && /^[A-Za-z][A-Za-z\s'.-]+[A-Za-z]$/.test(name) && !/\d/.test(name);
+        const matchOk = password && password === confirm;
+
+        const setReq = (id, ok) => {
+            const el = document.getElementById(id);
+            const icon = el.querySelector('i');
+            el.classList.toggle('text-green-700', ok);
+            el.classList.toggle('text-gray-700', !ok);
+            icon.className = ok ? 'fas fa-check-circle text-green-600' : 'fas fa-circle text-xs text-gray-400';
+        };
+
+        setReq('reqName', nameOk);
+        setReq('reqEmail', emailOk);
+        setReq('reqPassword', passwordOk);
+        setReq('reqMatch', matchOk);
+        setReq('reqTerms', terms);
+
+        document.getElementById('signupButton').disabled = !(nameOk && emailOk && passwordOk && matchOk && terms);
+    }
+
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', validateSignupForm);
+        input.addEventListener('change', validateSignupForm);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateUserTypeSelection();
+        validateSignupForm();
+    });
 </script>
 {% endblock %}

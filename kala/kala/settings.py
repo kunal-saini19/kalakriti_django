@@ -123,5 +123,12 @@ STATICFILES_DIRS = [BASE_DIR / 'kalakriti' / 'static']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Email (console backend for local verification links)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'KalaKriti <no-reply@kala.local>'
+
+# Terms version
+TERMS_VERSION = 'v1'
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

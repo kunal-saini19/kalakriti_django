@@ -28,12 +28,32 @@
     
     <!-- Messages -->
     {% if messages %}
-        <div class="fixed top-4 right-4 z-50">
-            {% for message in messages %}
-                <div class="mb-3 p-4 rounded-lg {% if message.tags %}{{ message.tags }}{% else %}bg-blue-100 text-blue-800{% endif %}" role="alert">
-                    {{ message }}
-                </div>
-            {% endfor %}
+        <div class="fixed top-6 inset-x-0 z-50 flex justify-center px-4">
+            <div class="w-full max-w-xl space-y-3">
+                {% for message in messages %}
+                    {% if message.tags == 'success' %}
+                        <div class="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-800 shadow-lg" role="alert">
+                            <i class="fas fa-check-circle mt-1"></i>
+                            <div class="text-sm font-medium">{{ message }}</div>
+                        </div>
+                    {% elif message.tags == 'error' %}
+                        <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-lg" role="alert">
+                            <i class="fas fa-times-circle mt-1"></i>
+                            <div class="text-sm font-medium">{{ message }}</div>
+                        </div>
+                    {% elif message.tags == 'warning' %}
+                        <div class="flex items-start gap-3 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-yellow-800 shadow-lg" role="alert">
+                            <i class="fas fa-exclamation-circle mt-1"></i>
+                            <div class="text-sm font-medium">{{ message }}</div>
+                        </div>
+                    {% else %}
+                        <div class="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg" role="alert">
+                            <i class="fas fa-info-circle mt-1"></i>
+                            <div class="text-sm font-medium">{{ message }}</div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
         </div>
     {% endif %}
     
