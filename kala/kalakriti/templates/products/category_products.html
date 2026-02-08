@@ -22,7 +22,7 @@
                 {% endif %}
                 <div class="p-4">
                     <h3 class="font-bold text-lg mb-2">
-                        <a href="{% url 'kalakriti:product_detail' product.slug %}" class="hover:text-indiaOrange">
+                        <a href="{% url 'kalakriti:product_detail' product.slug %}" class="hover:text-indiaOrange" data-product-id="{{ product.id }}">
                             {{ product.name }}
                         </a>
                     </h3>
@@ -41,7 +41,7 @@
                             </div>
                         {% endif %}
                     </div>
-                    <a href="{% url 'kalakriti:product_detail' product.slug %}" class="block w-full px-4 py-2 bg-indiaOrange text-white rounded text-center hover:bg-orange-600">
+                    <a href="{% url 'kalakriti:product_detail' product.slug %}" class="block w-full px-4 py-2 bg-indiaOrange text-white rounded text-center hover:bg-orange-600" data-product-id="{{ product.id }}">
                         View Details
                     </a>
                 </div>

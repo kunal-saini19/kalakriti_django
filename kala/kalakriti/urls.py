@@ -24,6 +24,7 @@ urlpatterns = [
     
     # Products
     path('products/', views.products_list, name='products_list'),
+    path('products/click/<uuid:product_id>/', views.log_product_click, name='log_product_click'),
     path('products/<slug:slug>/', views.product_detail, name='product_detail'),
     path('products/category/<slug:slug>/', views.category_products, name='category_products'),
     

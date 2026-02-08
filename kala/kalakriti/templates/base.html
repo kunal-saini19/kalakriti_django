@@ -73,6 +73,16 @@
                 msg.style.display = 'none';
             });
         }, 5000);
+
+        // Track product clicks for analytics
+        document.addEventListener('click', function (event) {
+            const link = event.target.closest('[data-product-id]');
+            if (!link) return;
+            const productId = link.getAttribute('data-product-id');
+            if (!productId) return;
+            fetch(`/products/click/${productId}/`, { method: 'GET', credentials: 'same-origin' })
+                .catch(() => {});
+        });
     </script>
     {% block extra_js %}{% endblock %}
 </body>

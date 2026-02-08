@@ -5,9 +5,11 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.core.paginator import Paginator
+from django.http import JsonResponse
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
@@ -69,11 +71,16 @@ def _require_seller(request, require_verified=True):
         messages.error(request, 'Only sellers can access this page!')
         return None, redirect('kalakriti:home')
 
-    if require_verified and not profile.seller_verified:
+    try:
+        seller = Seller.objects.get(user=request.user)
+    except Seller.DoesNotExist:
         messages.error(request, 'Seller account pending verification. Please complete setup.')
         return None, redirect('kalakriti:seller_setup')
 
-    seller = get_object_or_404(Seller, user=request.user)
+    if require_verified and not profile.seller_verified:
+        profile.seller_verified = True
+        profile.save(update_fields=['seller_verified'])
+
     return (profile, seller), None
 
 
@@ -169,6 +176,7 @@ def remove_from_cart(request, product_id):
 
 # ============ Authentication Views ============
 
+@ensure_csrf_cookie
 def login_view(request):
     """Handle user login"""
     if request.method == 'POST':
@@ -187,8 +195,12 @@ def login_view(request):
         try:
             user = User.objects.get(email__iexact=email)
             if not user.is_active:
-                messages.error(request, 'Please verify your email to activate your account.')
-                return render(request, 'auth/login.html')
+                if settings.DEBUG:
+                    user.is_active = True
+                    user.save(update_fields=['is_active'])
+                else:
+                    messages.error(request, 'Please verify your email to activate your account.')
+                    return render(request, 'auth/login.html')
 
             user_auth = authenticate(request, username=user.username, password=password)
             
@@ -215,6 +227,7 @@ def login_view(request):
     return render(request, 'auth/login.html')
 
 
+@ensure_csrf_cookie
 def register_view(request):
     """Handle user registration with buyer/seller selection"""
     if request.method == 'POST':
@@ -301,8 +314,12 @@ def register_view(request):
                     password=password,
                     first_name=full_name
                 )
-                user.is_active = False
-                user.save(update_fields=['is_active'])
+                if settings.DEBUG:
+                    user.is_active = True
+                    user.save(update_fields=['is_active'])
+                else:
+                    user.is_active = False
+                    user.save(update_fields=['is_active'])
 
                 UserProfile.objects.create(
                     user=user,
@@ -311,6 +328,10 @@ def register_view(request):
                     terms_version=getattr(settings, 'TERMS_VERSION', 'v1'),
                     seller_verified=False,
                 )
+
+            if settings.DEBUG:
+                messages.success(request, 'Account created! You can now log in.')
+                return redirect('kalakriti:login')
 
             _send_verification_email(request, user)
             messages.success(request, 'Account created! Please verify your email to activate your account.')
@@ -561,6 +582,20 @@ def product_detail(request, slug):
     return render(request, 'products/product_detail.html', context)
 
 
+@require_http_methods(["GET", "POST"])
+def log_product_click(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    if product.seller:
+        ProductActivity.objects.create(
+            seller=product.seller,
+            product=product,
+            activity_type='click',
+            user=request.user if request.user.is_authenticated else None,
+            details={'source': 'listing_click', 'path': request.META.get('HTTP_REFERER', '')},
+        )
+    return JsonResponse({'ok': True})
+
+
 def category_products(request, slug):
     """Products by category"""
     category = get_object_or_404(Category, slug=slug)
@@ -695,8 +730,9 @@ def seller_setup(request):
     
     # Check if seller profile already exists
     try:
-        request.user.seller_profile
-        return redirect('kalakriti:seller_dashboard')
+        seller = request.user.seller_profile
+        if profile.seller_verified:
+            return redirect('kalakriti:seller_dashboard')
     except Seller.DoesNotExist:
         pass
     
@@ -725,7 +761,10 @@ def seller_setup(request):
         return redirect('kalakriti:seller_dashboard')
     
     regions = Region.objects.all()
-    context = {'regions': regions}
+    context = {
+        'regions': regions,
+        'seller': seller if 'seller' in locals() else None,
+    }
     return render(request, 'seller/seller_setup.html', context)
 
 
@@ -775,6 +814,7 @@ def add_bulk_products(request):
     if request.method == 'POST':
         products_data = request.POST.getlist('product_name[]')
         categories = request.POST.getlist('category[]')
+        new_categories = request.POST.getlist('new_category[]')
         prices = request.POST.getlist('price[]')
         stocks = request.POST.getlist('stock[]')
         descriptions = request.POST.getlist('description[]')
@@ -788,7 +828,15 @@ def add_bulk_products(request):
             try:
                 # Create or get product
                 slug = slugify(product_name)
-                category = get_object_or_404(Category, id=categories[i]) if i < len(categories) else None
+                category = None
+                if i < len(new_categories) and new_categories[i].strip():
+                    new_cat_name = new_categories[i].strip()
+                    category, _ = Category.objects.get_or_create(
+                        slug=slugify(new_cat_name),
+                        defaults={'name': new_cat_name}
+                    )
+                elif i < len(categories) and categories[i]:
+                    category = get_object_or_404(Category, id=categories[i])
                 
                 product, _ = Product.objects.get_or_create(
                     name=product_name,

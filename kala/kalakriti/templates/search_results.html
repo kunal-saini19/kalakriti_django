@@ -41,7 +41,7 @@
                         {% endif %}
                         <div class="p-4">
                             <h3 class="font-semibold text-lg">
-                                <a href="{% url 'kalakriti:product_detail' product.slug %}" class="hover:text-indiaOrange">{{ product.name }}</a>
+                                <a href="{% url 'kalakriti:product_detail' product.slug %}" class="hover:text-indiaOrange" data-product-id="{{ product.id }}">{{ product.name }}</a>
                             </h3>
                             <p class="text-gray-600 text-sm mt-1">₹{{ product.price }}</p>
                             <p class="text-gray-500 text-sm mt-2">{{ product.description|truncatewords:18 }}</p>
