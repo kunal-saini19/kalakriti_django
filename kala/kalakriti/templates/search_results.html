@@ -135,7 +135,6 @@
         <section class="mb-12">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-semibold">Gallery</h2>
-                <a href="{% url 'kalakriti:gallery' %}?q={{ query }}" class="text-indiaOrange hover:underline">View all</a>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {% for item in gallery_images %}

@@ -121,9 +121,15 @@
                             <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
                         </button>
                     </form>
-                    <button class="px-6 py-3 border-2 border-indiaOrange text-indiaOrange rounded-lg hover:bg-orange-50 font-bold">
-                        <i class="fas fa-heart"></i>
-                    </button>
+                    {% if user.is_authenticated %}
+                        <button type="button" class="favorite-btn px-6 py-3 border-2 border-indiaOrange rounded-lg font-bold hover:bg-orange-50 transition" data-product-id="{{ product.id }}">
+                            <i class="fas fa-heart {% if is_favorite %}text-red-600{% else %}text-indiaOrange{% endif %}"></i>
+                        </button>
+                    {% else %}
+                        <a href="{% url 'kalakriti:login' %}" class="px-6 py-3 border-2 border-indiaOrange text-indiaOrange rounded-lg hover:bg-orange-50 font-bold flex items-center gap-2">
+                            <i class="fas fa-heart"></i>Login to favorite
+                        </a>
+                    {% endif %}
                 </div>
             {% else %}
                 <button disabled class="w-full px-6 py-3 bg-gray-400 text-white rounded-lg font-bold text-lg mb-6">
@@ -173,4 +179,42 @@
         </section>
     {% endif %}
 </div>
+
+<script>
+document.querySelectorAll('.favorite-btn').forEach(btn => {
+    btn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        const productId = this.dataset.productId;
+        const icon = this.querySelector('i');
+        
+        try {
+            const response = await fetch(`/favorite/toggle/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                if (data.is_favorite) {
+                    icon.classList.remove('text-indiaOrange');
+                    icon.classList.add('text-red-600');
+                    this.style.borderColor = '#f97316';
+                    this.style.color = '#f97316';
+                } else {
+                    icon.classList.remove('text-red-600');
+                    icon.classList.add('text-indiaOrange');
+                    this.style.borderColor = '#f97316';
+                    this.style.color = '#f97316';
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to update favorite. Please try again.');
+        }
+    });
+});
+</script>
 {% endblock %}

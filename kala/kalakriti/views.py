@@ -18,7 +18,7 @@ from django.conf import settings
 from .models import (
     Category, Region, Artisan, Product, CulturalStory, 
     GalleryImage, Order, OrderItem, Newsletter, UserProfile,
-    Seller, SellerProduct, ProductActivity
+    Seller, SellerProduct, ProductActivity, Favorite
 )
 from django.utils.text import slugify
 from django.utils import timezone
@@ -88,6 +88,14 @@ def cart_view(request):
     cart = _get_cart(request)
     product_ids = list(cart.keys())
     products = Product.objects.filter(id__in=product_ids)
+    
+    # Get user's favorites if authenticated
+    favorite_products = []
+    if request.user.is_authenticated:
+        favorite_products = Favorite.objects.filter(user=request.user).select_related('product')
+        favorites_set = set(Favorite.objects.filter(user=request.user).values_list('product_id', flat=True))
+    else:
+        favorites_set = set()
 
     items = []
     subtotal = Decimal('0.00')
@@ -102,6 +110,7 @@ def cart_view(request):
             'product': product,
             'quantity': quantity,
             'line_total': line_total,
+            'is_favorite': product.id in favorites_set,
         })
 
     shipping = Decimal('0.00')
@@ -112,6 +121,7 @@ def cart_view(request):
         'subtotal': subtotal,
         'shipping': shipping,
         'total': total,
+        'favorites': favorite_products,
     }
     return render(request, 'cart.html', context)
 
@@ -418,27 +428,6 @@ def home(request):
     return render(request, 'home.html', context)
 
 
-def gallery(request):
-    """Gallery page - showcase all gallery images"""
-    images = GalleryImage.objects.all()
-    search_query = request.GET.get('q')
-
-    if search_query:
-        images = images.filter(
-            Q(title__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(artisan__name__icontains=search_query) |
-            Q(product__name__icontains=search_query) |
-            Q(region__name__icontains=search_query)
-        )
-    
-    context = {
-        'gallery_images': images,
-        'search_query': search_query,
-    }
-    return render(request, 'gallery.html', context)
-
-
 def search_all(request):
     """Global search across products, artisans, stories, regions, and gallery."""
     query = (request.GET.get('q') or '').strip()
@@ -575,9 +564,15 @@ def product_detail(request, slug):
         category=product.category
     ).exclude(id=product.id)[:4]
     
+    # Check if product is favorited by the current user
+    is_favorite = False
+    if request.user.is_authenticated:
+        is_favorite = Favorite.objects.filter(user=request.user, product=product).exists()
+    
     context = {
         'product': product,
         'related_products': related_products,
+        'is_favorite': is_favorite,
     }
     return render(request, 'products/product_detail.html', context)
 
@@ -988,6 +983,34 @@ def story_detail(request, slug):
         'related_stories': related_stories,
     }
     return render(request, 'stories/story_detail.html', context)
+
+
+# ============ Favorites/Wishlist ============
+
+@login_required(login_url='kalakriti:login')
+@require_http_methods(["POST"])
+def toggle_favorite(request, product_id):
+    """Toggle product as favorite/wishlist"""
+    product = get_object_or_404(Product, id=product_id)
+    
+    favorite, created = Favorite.objects.get_or_create(
+        user=request.user,
+        product=product
+    )
+    
+    if not created:
+        favorite.delete()
+        is_favorite = False
+        messages.info(request, f'Removed {product.name} from favorites.')
+    else:
+        is_favorite = True
+        messages.success(request, f'Added {product.name} to favorites!')
+    
+    return JsonResponse({
+        'success': True,
+        'is_favorite': is_favorite,
+        'message': 'Added to favorites' if is_favorite else 'Removed from favorites'
+    })
 
 
 # ============ Newsletter ============

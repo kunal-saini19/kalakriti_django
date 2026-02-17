@@ -26,7 +26,6 @@
                 <h3 class="text-lg font-bold mb-4">Categories</h3>
                 <ul class="space-y-2 text-gray-400 text-sm">
                     <li><a href="{% url 'kalakriti:cultural_stories' %}" class="hover:text-indiaOrange">Stories</a></li>
-                    <li><a href="{% url 'kalakriti:gallery' %}" class="hover:text-indiaOrange">Gallery</a></li>
                     {% if user.is_authenticated %}
                         <li><a href="{% url 'kalakriti:private' %}" class="hover:text-indiaOrange">Dashboard</a></li>
                     {% endif %}

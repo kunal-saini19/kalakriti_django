@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Category, Region, Artisan, Product, CulturalStory, 
-    GalleryImage, Order, OrderItem, Newsletter
+    GalleryImage, Order, OrderItem, Newsletter, Favorite
 )
 
 # Customize admin site
@@ -123,3 +123,11 @@ class NewsletterAdmin(admin.ModelAdmin):
     search_fields = ('email',)
     list_filter = ('subscribed_at',)
     readonly_fields = ('subscribed_at',)
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'created_at')
+    search_fields = ('user__email', 'product__name')
+    list_filter = ('created_at',)
+    readonly_fields = ('created_at',)

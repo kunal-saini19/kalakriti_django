@@ -7,12 +7,14 @@ urlpatterns = [
     # Home & Main Pages
     path('', views.home, name='home'),
     path('search/', views.search_all, name='search_all'),
-    path('gallery/', views.gallery, name='gallery'),
     path('private/', views.private_page, name='private'),
     path('cart/', views.cart_view, name='cart'),
     path('cart/add/<uuid:product_id>/', views.add_to_cart, name='add_to_cart'),
     path('cart/update/<uuid:product_id>/', views.update_cart, name='update_cart'),
     path('cart/remove/<uuid:product_id>/', views.remove_from_cart, name='remove_from_cart'),
+    
+    # Favorites
+    path('favorite/toggle/<uuid:product_id>/', views.toggle_favorite, name='toggle_favorite'),
     
     # Authentication
     path('login/', views.login_view, name='login'),
