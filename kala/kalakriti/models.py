@@ -38,8 +38,8 @@ class Seller(models.Model):
     shop_name = models.CharField(max_length=200)
     shop_description = models.TextField(blank=True)
     shop_logo = models.ImageField(upload_to='shop_logos/', blank=True, null=True)
-    region = models.ForeignKey('Region', on_delete=models.SET_NULL, null=True, blank=True, related_name='sellers')
     phone = models.CharField(max_length=20)
+    state = models.CharField(max_length=100)  # Work location state/UT
     bank_account = models.CharField(max_length=20, blank=True)
     bank_name = models.CharField(max_length=100, blank=True)
     ifsc_code = models.CharField(max_length=11, blank=True)

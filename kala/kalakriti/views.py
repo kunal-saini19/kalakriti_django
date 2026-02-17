@@ -734,11 +734,24 @@ def seller_setup(request):
     if request.method == 'POST':
         shop_name = request.POST.get('shop_name')
         shop_description = request.POST.get('shop_description')
-        phone = request.POST.get('phone')
-        region_id = request.POST.get('region')
+        country_code = request.POST.get('country_code', '+91')
+        phone_number = request.POST.get('phone', '')
+        state = request.POST.get('state', '')
         
-        if not shop_name or not phone:
-            messages.error(request, 'Shop name and phone are required!')
+        # Validate phone number (must be exactly 10 digits)
+        if not phone_number or len(phone_number) != 10 or not phone_number.isdigit():
+            messages.error(request, 'Phone number must be exactly 10 digits!')
+            return render(request, 'seller/seller_setup.html')
+        
+        # Combine country code and phone number
+        phone = f"{country_code} {phone_number}"
+        
+        if not shop_name:
+            messages.error(request, 'Shop name is required!')
+            return render(request, 'seller/seller_setup.html')
+        
+        if not state:
+            messages.error(request, 'State is required!')
             return render(request, 'seller/seller_setup.html')
         
         seller = Seller.objects.create(
@@ -746,7 +759,7 @@ def seller_setup(request):
             shop_name=shop_name,
             shop_description=shop_description,
             phone=phone,
-            region_id=region_id if region_id else None
+            state=state,
         )
 
         profile.seller_verified = True
@@ -755,9 +768,7 @@ def seller_setup(request):
         messages.success(request, f'Shop "{shop_name}" created successfully!')
         return redirect('kalakriti:seller_dashboard')
     
-    regions = Region.objects.all()
     context = {
-        'regions': regions,
         'seller': seller if 'seller' in locals() else None,
     }
     return render(request, 'seller/seller_setup.html', context)
@@ -796,6 +807,66 @@ def seller_dashboard(request):
     }
     
     return render(request, 'seller/dashboard.html', context)
+
+
+@login_required(login_url='kalakriti:login')
+def seller_profile(request):
+    """Edit seller profile page"""
+    seller_data, response = _require_seller(request, require_verified=True)
+    if response:
+        return response
+    profile, seller = seller_data
+    
+    if request.method == 'POST':
+        shop_name = request.POST.get('shop_name')
+        shop_description = request.POST.get('shop_description')
+        country_code = request.POST.get('country_code', '+91')
+        phone_number = request.POST.get('phone', '')
+        state = request.POST.get('state', '')
+        first_name = request.POST.get('first_name', '')
+        
+        # Validate phone number (must be exactly 10 digits)
+        if not phone_number or len(phone_number) != 10 or not phone_number.isdigit():
+            messages.error(request, 'Phone number must be exactly 10 digits!')
+            return render(request, 'seller/profile.html', {'seller': seller})
+        
+        # Combine country code and phone number
+        phone = f"{country_code} {phone_number}"
+        
+        if not shop_name:
+            messages.error(request, 'Shop name is required!')
+            return render(request, 'seller/profile.html', {'seller': seller})
+        
+        if not state:
+            messages.error(request, 'State is required!')
+            return render(request, 'seller/profile.html', {'seller': seller})
+        
+        # Update seller profile
+        seller.shop_name = shop_name
+        seller.shop_description = shop_description
+        seller.phone = phone
+        seller.state = state
+        seller.save()
+        
+        # Update user first name
+        if first_name:
+            request.user.first_name = first_name
+            request.user.save(update_fields=['first_name'])
+        
+        messages.success(request, 'Profile updated successfully!')
+        return redirect('kalakriti:seller_profile')
+    
+    # Extract phone number parts for form
+    phone_parts = seller.phone.split(' ', 1) if seller.phone else ['+91', '']
+    country_code = phone_parts[0] if len(phone_parts) > 0 else '+91'
+    phone_number = phone_parts[1] if len(phone_parts) > 1 else ''
+    
+    context = {
+        'seller': seller,
+        'country_code': country_code,
+        'phone_number': phone_number,
+    }
+    return render(request, 'seller/profile.html', context)
 
 
 @login_required(login_url='kalakriti:login')

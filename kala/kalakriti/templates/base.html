@@ -6,18 +6,72 @@
     <title>{% block title %}KalaKriti - Indian Craftsmanship{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --color-orange: #F97316;
+            --color-brown-dark: #3D2914;
+            --color-brown: #5C3D2E;
+            --color-taupe: #8B7355;
+            --color-cream: #F5F0EB;
+            --color-beige: #E8E0D5;
+            --gradient-hero: linear-gradient(135deg, #3D2914 0%, #5C3D2E 40%, #8B7355 100%);
+            --gradient-btn: linear-gradient(135deg, #5C3D2E 0%, #8B7355 100%);
+            --gradient-accent: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+            --gradient-card: linear-gradient(145deg, #ffffff 0%, #F5F0EB 100%);
+            --gradient-section: linear-gradient(180deg, #ffffff 0%, #F5F0EB 100%);
         }
         body {
             font-family: 'Inter', sans-serif;
+        }
+        h1, h2, h3, h4 {
+            font-family: 'Playfair Display', serif;
         }
         .text-indiaOrange {
             color: var(--color-orange);
         }
         .bg-indiaOrange {
             background-color: var(--color-orange);
+        }
+        .gradient-hero {
+            background: var(--gradient-hero);
+        }
+        .gradient-btn {
+            background: var(--gradient-btn);
+            transition: all 0.3s ease;
+        }
+        .gradient-btn:hover {
+            background: linear-gradient(135deg, #4A3222 0%, #7A6245 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(92, 61, 46, 0.3);
+        }
+        .gradient-accent {
+            background: var(--gradient-accent);
+        }
+        .gradient-card {
+            background: var(--gradient-card);
+        }
+        .gradient-section {
+            background: var(--gradient-section);
+        }
+        .bg-cream {
+            background-color: var(--color-cream);
+        }
+        .bg-beige {
+            background-color: var(--color-beige);
+        }
+        .text-brown {
+            color: var(--color-brown);
+        }
+        .text-brown-dark {
+            color: var(--color-brown-dark);
+        }
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(61, 41, 20, 0.15);
         }
     </style>
     {% block extra_css %}{% endblock %}

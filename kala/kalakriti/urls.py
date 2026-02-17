@@ -48,6 +48,7 @@ urlpatterns = [
     # Seller Routes
     path('seller/setup/', views.seller_setup, name='seller_setup'),
     path('seller/dashboard/', views.seller_dashboard, name='seller_dashboard'),
+    path('seller/profile/', views.seller_profile, name='seller_profile'),
     path('seller/bulk-upload/', views.add_bulk_products, name='bulk_upload'),
     path('seller/products/', views.seller_products, name='seller_products'),
     path('seller/activity/', views.seller_activity, name='seller_activity'),
