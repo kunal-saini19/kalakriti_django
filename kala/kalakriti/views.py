@@ -1060,7 +1060,6 @@ def add_bulk_products(request):
         prices = request.POST.getlist('price[]')
         stocks = request.POST.getlist('stock[]')
         descriptions = request.POST.getlist('description[]')
-        product_regions = request.POST.getlist('region[]')
         artisan_names = request.POST.getlist('artisan_name[]')
         artisan_specialties = request.POST.getlist('artisan_specialty[]')
         artisan_experiences = request.POST.getlist('artisan_experience[]')
@@ -1074,8 +1073,7 @@ def add_bulk_products(request):
                 continue
             
             try:
-                region_name = product_regions[i].strip() if i < len(product_regions) else ''
-                region = _get_or_create_region_for_state(region_name) if region_name else seller_region
+                region = seller_region
 
                 artisan_name = artisan_names[i] if i < len(artisan_names) else ''
                 specialty = artisan_specialties[i].strip() if i < len(artisan_specialties) else ''
