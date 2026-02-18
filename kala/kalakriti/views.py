@@ -7,9 +7,10 @@ from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from django.core.paginator import Paginator
 from django.http import JsonResponse
+from django.template.loader import render_to_string
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
@@ -18,7 +19,7 @@ from django.conf import settings
 from .models import (
     Category, Region, Artisan, Product, CulturalStory, 
     GalleryImage, Order, OrderItem, Newsletter, UserProfile,
-    Seller, SellerProduct, ProductActivity, Favorite
+    Seller, SellerProduct, ProductActivity, Favorite, StoryPost
 )
 from django.utils.text import slugify
 from django.utils import timezone
@@ -65,6 +66,92 @@ def _send_verification_email(request, user):
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=True)
 
 
+def _get_or_create_region_for_state(state_name):
+    state_name = (state_name or '').strip()
+    if not state_name:
+        return None
+
+    region = Region.objects.filter(name__iexact=state_name).first()
+    if region:
+        return region
+
+    base_slug = slugify(state_name) or 'region'
+    slug = base_slug
+    counter = 2
+    while Region.objects.filter(slug=slug).exists():
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
+    fallback_region = Region.objects.first()
+    fallback_image = (
+        fallback_region.image.name
+        if fallback_region and fallback_region.image
+        else 'regions/rajasthan.jpg'
+    )
+
+    return Region.objects.create(
+        name=state_name,
+        slug=slug,
+        description=f"Craft heritage and artisan traditions from {state_name}.",
+        cultural_heritage=f"Traditional crafts rooted in {state_name}.",
+        image=fallback_image,
+    )
+
+
+def _get_or_create_artisan(name, region=None, specialty='', years_of_experience=None, bio=''):
+    name = (name or '').strip()
+    if not name:
+        return None
+
+    artisan = Artisan.objects.filter(name__iexact=name).first()
+    if artisan:
+        updates = []
+        if region and artisan.region_id != region.id:
+            artisan.region = region
+            updates.append('region')
+        if specialty and artisan.specialty != specialty:
+            artisan.specialty = specialty
+            updates.append('specialty')
+        if bio and artisan.bio != bio:
+            artisan.bio = bio
+            updates.append('bio')
+        if years_of_experience and artisan.years_of_experience != years_of_experience:
+            artisan.years_of_experience = years_of_experience
+            updates.append('years_of_experience')
+        if updates:
+            artisan.save(update_fields=updates)
+        return artisan
+
+    base_slug = slugify(name) or 'artisan'
+    slug = base_slug
+    counter = 2
+    while Artisan.objects.filter(slug=slug).exists():
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
+    fallback_artisan = Artisan.objects.first()
+    fallback_image = (
+        fallback_artisan.image.name
+        if fallback_artisan and fallback_artisan.image
+        else 'artisans/arjun-patel.jpg'
+    )
+
+    safe_region = region or Region.objects.first()
+    safe_specialty = specialty or 'Traditional Crafts'
+    safe_bio = bio or f"{name} is a skilled artisan specializing in {safe_specialty}."
+    safe_years = years_of_experience if years_of_experience else 1
+
+    return Artisan.objects.create(
+        name=name,
+        slug=slug,
+        bio=safe_bio,
+        image=fallback_image,
+        region=safe_region,
+        specialty=safe_specialty,
+        years_of_experience=safe_years,
+    )
+
+
 def _require_seller(request, require_verified=True):
     profile = get_object_or_404(UserProfile, user=request.user)
     if profile.user_type != 'seller':
@@ -87,15 +174,12 @@ def _require_seller(request, require_verified=True):
 def cart_view(request):
     cart = _get_cart(request)
     product_ids = list(cart.keys())
-    products = Product.objects.filter(id__in=product_ids)
+    products = Product.objects.filter(id__in=product_ids).select_related('category')
     
-    # Get user's favorites if authenticated
-    favorite_products = []
-    if request.user.is_authenticated:
-        favorite_products = Favorite.objects.filter(user=request.user).select_related('product')
-        favorites_set = set(Favorite.objects.filter(user=request.user).values_list('product_id', flat=True))
-    else:
-        favorites_set = set()
+    # Get user's favorite product IDs in a single query
+    favorites_set = set(
+        Favorite.objects.filter(user=request.user).values_list('product_id', flat=True)
+    ) if request.user.is_authenticated else set()
 
     items = []
     subtotal = Decimal('0.00')
@@ -121,7 +205,6 @@ def cart_view(request):
         'subtotal': subtotal,
         'shipping': shipping,
         'total': total,
-        'favorites': favorite_products,
     }
     return render(request, 'cart.html', context)
 
@@ -503,32 +586,30 @@ def private_page(request):
 
 # ============ Products ============
 
-def products_list(request):
-    """Products listing page with filtering"""
-    products = Product.objects.all()
+def _build_products_list_context(request):
+    products = Product.objects.select_related('category', 'region', 'artisan').all()
     categories = Category.objects.all()
     regions = Region.objects.all()
-    
-    # Filtering
+
     category_slug = request.GET.get('category')
     region_slug = request.GET.get('region')
     search_query = request.GET.get('q')
-    
+
     if category_slug:
         category = get_object_or_404(Category, slug=category_slug)
         products = products.filter(category=category)
-    
+
     if region_slug:
         region = get_object_or_404(Region, slug=region_slug)
         products = products.filter(region=region)
-    
+
     if search_query:
         products = products.filter(
             Q(name__icontains=search_query) |
             Q(description__icontains=search_query)
         )
-    
-    context = {
+
+    return {
         'products': products,
         'categories': categories,
         'regions': regions,
@@ -536,7 +617,26 @@ def products_list(request):
         'selected_region': region_slug,
         'search_query': search_query,
     }
+
+def products_list(request):
+    """Products listing page with filtering"""
+    context = _build_products_list_context(request)
     return render(request, 'products/products_list.html', context)
+
+
+def products_feed_data(request):
+    """Return rendered products grid for real-time polling."""
+    context = _build_products_list_context(request)
+    grid_html = render_to_string(
+        'products/_product_grid.html',
+        {'products': context['products']},
+        request=request,
+    )
+    return JsonResponse({
+        'success': True,
+        'grid_html': grid_html,
+        'count': context['products'].count(),
+    })
 
 
 def product_detail(request, slug):
@@ -607,7 +707,7 @@ def category_products(request, slug):
 
 def artisans_list(request):
     """List all artisans"""
-    artisans = Artisan.objects.all()
+    artisans = Artisan.objects.select_related('region').all()
     regions = Region.objects.all()
     
     region_slug = request.GET.get('region')
@@ -630,6 +730,27 @@ def artisans_list(request):
         'search_query': search_query,
     }
     return render(request, 'artisans/artisans_list.html', context)
+
+
+def regions_feed_data(request):
+    """Return rendered regions grid for real-time polling."""
+    regions = Region.objects.all()
+    search_query = request.GET.get('q')
+
+    if search_query:
+        regions = regions.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(cultural_heritage__icontains=search_query)
+        )
+
+    grid_html = render_to_string(
+        'regions/_region_cards.html',
+        {'regions': regions},
+        request=request,
+    )
+
+    return JsonResponse({'success': True, 'grid_html': grid_html})
 
 
 def artisan_detail(request, slug):
@@ -685,31 +806,67 @@ def region_detail(request, slug):
 
 # ============ Stories & Content ============
 
+def _story_feed_queryset(request_user):
+    feed_posts = StoryPost.objects.select_related('user')
+    if request_user.is_authenticated:
+        feed_posts = feed_posts.exclude(user=request_user)
+    return feed_posts
+
 def cultural_stories(request):
-    """List cultural stories"""
-    stories = CulturalStory.objects.filter(published=True)
-    regions = Region.objects.all()
-    
-    region_slug = request.GET.get('region')
-    search_query = request.GET.get('q')
-    if region_slug:
-        region = get_object_or_404(Region, slug=region_slug)
-        stories = stories.filter(region=region)
-    if search_query:
-        stories = stories.filter(
-            Q(title__icontains=search_query) |
-            Q(content__icontains=search_query) |
-            Q(category__icontains=search_query) |
-            Q(region__name__icontains=search_query)
+    """Stories feed page with quick posting and real-time updates."""
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Please log in to post a story update.'}, status=401)
+            messages.error(request, 'Please log in to post a story update.')
+            return redirect('kalakriti:login')
+
+        content = (request.POST.get('content') or '').strip()
+
+        if not content:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Story text cannot be empty.'}, status=400)
+            messages.error(request, 'Story text cannot be empty.')
+            return redirect('kalakriti:cultural_stories')
+
+        post = StoryPost.objects.create(
+            user=request.user,
+            content=content,
         )
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            post_html = render_to_string(
+                'stories/_story_post_item.html',
+                {'post': post},
+                request=request,
+            )
+            return JsonResponse({'success': True, 'post_html': post_html, 'post_id': str(post.id)})
+
+        messages.success(request, 'Story posted successfully!')
+        return redirect('kalakriti:cultural_stories')
+
+    feed_posts = _story_feed_queryset(request.user)[:50]
+
+    featured_stories = CulturalStory.objects.filter(published=True).select_related('region')[:4]
     
     context = {
-        'stories': stories,
-        'regions': regions,
-        'selected_region': region_slug,
-        'search_query': search_query,
+        'feed_posts': feed_posts,
+        'featured_stories': featured_stories,
     }
     return render(request, 'stories/cultural_stories.html', context)
+
+
+def story_feed_data(request):
+    """Return rendered feed HTML for real-time polling."""
+    feed_posts = _story_feed_queryset(request.user)[:50]
+    feed_html = render_to_string(
+        'stories/_story_feed_items.html',
+        {'feed_posts': feed_posts},
+        request=request,
+    )
+
+    latest_post_id = str(feed_posts[0].id) if feed_posts else ''
+    return JsonResponse({'success': True, 'feed_html': feed_html, 'latest_post_id': latest_post_id})
 
 
 # ============ Seller Dashboard Views ============
@@ -762,8 +919,13 @@ def seller_setup(request):
             state=state,
         )
 
+        _get_or_create_region_for_state(state)
+
+        profile.phone = phone
+        profile.state = state
+
         profile.seller_verified = True
-        profile.save(update_fields=['seller_verified'])
+        profile.save(update_fields=['seller_verified', 'phone', 'state'])
         
         messages.success(request, f'Shop "{shop_name}" created successfully!')
         return redirect('kalakriti:seller_dashboard')
@@ -822,7 +984,7 @@ def seller_profile(request):
         shop_description = request.POST.get('shop_description')
         country_code = request.POST.get('country_code', '+91')
         phone_number = request.POST.get('phone', '')
-        state = request.POST.get('state', '')
+        state = (request.POST.get('state', '') or '').strip()
         first_name = request.POST.get('first_name', '')
         
         # Validate phone number (must be exactly 10 digits)
@@ -841,12 +1003,23 @@ def seller_profile(request):
             messages.error(request, 'State is required!')
             return render(request, 'seller/profile.html', {'seller': seller})
         
+        previous_state = seller.state
+
         # Update seller profile
         seller.shop_name = shop_name
         seller.shop_description = shop_description
         seller.phone = phone
         seller.state = state
         seller.save()
+
+        profile.phone = phone
+        profile.state = state
+        profile.save(update_fields=['phone', 'state'])
+
+        # Ensure selected seller state exists as a Region so it appears in frontend filters
+        region = _get_or_create_region_for_state(state)
+        if region and previous_state != state:
+            Product.objects.filter(seller=seller).exclude(region=region).update(region=region)
         
         # Update user first name
         if first_name:
@@ -878,12 +1051,21 @@ def add_bulk_products(request):
     profile, seller = seller_data
     
     if request.method == 'POST':
+        seller_state = (seller.state or '').strip()
+        seller_region = _get_or_create_region_for_state(seller_state)
+
         products_data = request.POST.getlist('product_name[]')
         categories = request.POST.getlist('category[]')
         new_categories = request.POST.getlist('new_category[]')
         prices = request.POST.getlist('price[]')
         stocks = request.POST.getlist('stock[]')
         descriptions = request.POST.getlist('description[]')
+        product_regions = request.POST.getlist('region[]')
+        artisan_names = request.POST.getlist('artisan_name[]')
+        artisan_specialties = request.POST.getlist('artisan_specialty[]')
+        artisan_experiences = request.POST.getlist('artisan_experience[]')
+        artisan_bios = request.POST.getlist('artisan_bio[]')
+        artisan_regions = request.POST.getlist('artisan_region[]')
         
         added_count = 0
         
@@ -892,6 +1074,27 @@ def add_bulk_products(request):
                 continue
             
             try:
+                region_name = product_regions[i].strip() if i < len(product_regions) else ''
+                region = _get_or_create_region_for_state(region_name) if region_name else seller_region
+
+                artisan_name = artisan_names[i] if i < len(artisan_names) else ''
+                specialty = artisan_specialties[i].strip() if i < len(artisan_specialties) else ''
+                bio = artisan_bios[i].strip() if i < len(artisan_bios) else ''
+                artisan_region_name = artisan_regions[i].strip() if i < len(artisan_regions) else ''
+                artisan_region = _get_or_create_region_for_state(artisan_region_name) if artisan_region_name else region
+                try:
+                    years_of_experience = int(artisan_experiences[i]) if i < len(artisan_experiences) and artisan_experiences[i] else None
+                except (TypeError, ValueError):
+                    years_of_experience = None
+
+                artisan = _get_or_create_artisan(
+                    artisan_name,
+                    region=artisan_region or region or seller_region,
+                    specialty=specialty,
+                    years_of_experience=years_of_experience,
+                    bio=bio,
+                )
+
                 # Create or get product
                 slug = slugify(product_name)
                 category = None
@@ -912,9 +1115,46 @@ def add_bulk_products(request):
                         'price': prices[i] if i < len(prices) else 0,
                         'stock': stocks[i] if i < len(stocks) else 0,
                         'category': category,
+                        'region': region,
+                        'artisan': artisan,
                         'seller': seller,
+                        'in_stock': int(stocks[i]) > 0 if i < len(stocks) and str(stocks[i]).strip() else False,
                     }
                 )
+
+                # Keep core product fields in sync for frontend listings
+                updates = []
+                if region and product.region_id != region.id:
+                    product.region = region
+                    updates.append('region')
+
+                if artisan and product.artisan_id != artisan.id:
+                    product.artisan = artisan
+                    updates.append('artisan')
+
+                if category and product.category_id != category.id:
+                    product.category = category
+                    updates.append('category')
+
+                if i < len(descriptions) and descriptions[i] and product.description != descriptions[i]:
+                    product.description = descriptions[i]
+                    updates.append('description')
+
+                if i < len(prices) and str(prices[i]).strip():
+                    product.price = prices[i]
+                    updates.append('price')
+
+                if i < len(stocks) and str(stocks[i]).strip():
+                    product.stock = stocks[i]
+                    product.in_stock = int(stocks[i]) > 0
+                    updates.extend(['stock', 'in_stock'])
+
+                if product.seller_id != seller.id:
+                    product.seller = seller
+                    updates.append('seller')
+
+                if updates:
+                    product.save(update_fields=list(dict.fromkeys(updates)))
                 
                 # Create seller product mapping
                 SellerProduct.objects.update_or_create(
@@ -933,10 +1173,11 @@ def add_bulk_products(request):
         
         if added_count > 0:
             messages.success(request, f'Successfully added {added_count} product(s)!')
-            return redirect('kalakriti:seller_dashboard')
+            return redirect('kalakriti:seller_products')
     
     categories = Category.objects.all()
-    context = {'categories': categories}
+    regions = Region.objects.all()
+    context = {'categories': categories, 'regions': regions}
     return render(request, 'seller/bulk_upload.html', context)
 
 
@@ -947,23 +1188,30 @@ def seller_products(request):
     if response:
         return response
     profile, seller = seller_data
-    seller_products = seller.seller_products.select_related('product').all()
+    seller_products_qs = seller.seller_products.select_related('product', 'product__category').all()
     
-    # Get activity stats for each product
+    # Get activity counts in bulk using aggregation (avoids N+1 queries)
+    product_ids = [sp.product_id for sp in seller_products_qs]
+    
+    view_counts = dict(
+        ProductActivity.objects.filter(
+            seller=seller, product_id__in=product_ids, activity_type='view'
+        ).values('product_id').annotate(count=Count('id')).values_list('product_id', 'count')
+    )
+    sales_counts = dict(
+        ProductActivity.objects.filter(
+            seller=seller, product_id__in=product_ids, activity_type='purchase'
+        ).values('product_id').annotate(count=Count('id')).values_list('product_id', 'count')
+    )
+    
     product_stats = []
     total_views = 0
     total_sales = 0
-    for sp in seller_products:
-        views = ProductActivity.objects.filter(
-            seller=seller, product=sp.product, activity_type='view'
-        ).count()
-        sales = ProductActivity.objects.filter(
-            seller=seller, product=sp.product, activity_type='purchase'
-        ).count()
-
+    for sp in seller_products_qs:
+        views = view_counts.get(sp.product_id, 0)
+        sales = sales_counts.get(sp.product_id, 0)
         total_views += views
         total_sales += sales
-        
         product_stats.append({
             'seller_product': sp,
             'views': views,
@@ -1022,11 +1270,16 @@ def seller_analytics(request):
     total_clicks = seller.activities.filter(activity_type='click').count()
     total_cart_adds = seller.activities.filter(activity_type='add_cart').count()
     total_purchases = seller.activities.filter(activity_type='purchase').count()
-    
-    # Conversion rates
-    view_to_click = (total_clicks / total_views * 100) if total_views > 0 else 0
-    click_to_cart = (total_cart_adds / total_clicks * 100) if total_clicks > 0 else 0
-    cart_to_purchase = (total_purchases / total_cart_adds * 100) if total_cart_adds > 0 else 0
+
+    # Funnel-capped counts to prevent impossible conversions (>100%)
+    funnel_clicks = min(total_clicks, total_views)
+    funnel_cart_adds = min(total_cart_adds, funnel_clicks)
+    funnel_purchases = min(total_purchases, funnel_cart_adds)
+
+    # Conversion rates (based on capped funnel counts)
+    view_to_click = (funnel_clicks / total_views * 100) if total_views > 0 else 0
+    click_to_cart = (funnel_cart_adds / funnel_clicks * 100) if funnel_clicks > 0 else 0
+    cart_to_purchase = (funnel_purchases / funnel_cart_adds * 100) if funnel_cart_adds > 0 else 0
     
     context = {
         'seller': seller,
@@ -1034,6 +1287,9 @@ def seller_analytics(request):
         'total_clicks': total_clicks,
         'total_cart_adds': total_cart_adds,
         'total_purchases': total_purchases,
+        'funnel_clicks': funnel_clicks,
+        'funnel_cart_adds': funnel_cart_adds,
+        'funnel_purchases': funnel_purchases,
         'view_to_click': round(view_to_click, 2),
         'click_to_cart': round(click_to_cart, 2),
         'cart_to_purchase': round(cart_to_purchase, 2),

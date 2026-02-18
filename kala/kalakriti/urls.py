@@ -26,6 +26,7 @@ urlpatterns = [
     
     # Products
     path('products/', views.products_list, name='products_list'),
+    path('products/feed-data/', views.products_feed_data, name='products_feed_data'),
     path('products/click/<uuid:product_id>/', views.log_product_click, name='log_product_click'),
     path('products/<slug:slug>/', views.product_detail, name='product_detail'),
     path('products/category/<slug:slug>/', views.category_products, name='category_products'),
@@ -36,10 +37,12 @@ urlpatterns = [
     
     # Regions
     path('regions/', views.regions_list, name='regions_list'),
+    path('regions/feed-data/', views.regions_feed_data, name='regions_feed_data'),
     path('regions/<slug:slug>/', views.region_detail, name='region_detail'),
     
     # Cultural Stories
     path('stories/', views.cultural_stories, name='cultural_stories'),
+    path('stories/feed-data/', views.story_feed_data, name='story_feed_data'),
     path('stories/<slug:slug>/', views.story_detail, name='story_detail'),
     
     # Newsletter

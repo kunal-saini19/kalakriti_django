@@ -220,6 +220,39 @@ class CulturalStory(models.Model):
         verbose_name_plural = 'Cultural Stories'
 
 
+class StoryPost(models.Model):
+    """Social-style story feed posts with optional mentions."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='story_posts')
+    content = models.TextField(max_length=280)
+    mentioned_product = models.ForeignKey(
+        'Product',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='mentioned_in_posts',
+    )
+    mentioned_artisan = models.ForeignKey(
+        'Artisan',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='mentioned_in_posts',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username}: {self.content[:40]}"
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+
+
 class GalleryImage(models.Model):
     """Gallery Image Model"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

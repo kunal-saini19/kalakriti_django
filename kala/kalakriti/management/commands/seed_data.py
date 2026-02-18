@@ -24,6 +24,7 @@ from kalakriti.models import (
     Region,
     Seller,
     SellerProduct,
+    StoryPost,
     UserProfile,
 )
 
@@ -60,6 +61,7 @@ class Command(BaseCommand):
             products = self._create_products(categories, regions, artisans, sellers)
             self._create_seller_products(sellers, products)
             self._create_stories(regions)
+            self._create_story_posts(users)
             self._create_gallery(artisans, products, regions)
             self._create_orders(users, products)
             self._create_product_activity(sellers, products, users)
@@ -75,6 +77,7 @@ class Command(BaseCommand):
         Product.objects.all().delete()
         GalleryImage.objects.all().delete()
         CulturalStory.objects.all().delete()
+        StoryPost.objects.all().delete()
         Artisan.objects.all().delete()
         Seller.objects.all().delete()
         UserProfile.objects.all().delete()
@@ -331,33 +334,33 @@ class Command(BaseCommand):
                 users["seller1"],
                 "Sadbhav Crafts",
                 "Curated heritage crafts from Rajasthan.",
-                regions[0],
+                regions[0].name,
                 "shop_logos/sadbhav-crafts.jpg",
             ),
             (
                 users["seller2"],
                 "Raaga Studio",
                 "Textile studio celebrating Bengal artisans.",
-                regions[2],
+                regions[2].name,
                 "shop_logos/raaga-studio.jpg",
             ),
             (
                 users["seller3"],
                 "Sundar Collective",
                 "Southern crafts and ritual art pieces.",
-                regions[3],
+                regions[3].name,
                 "shop_logos/sundar-collective.jpg",
             ),
         ]
 
-        for user, name, description, region, logo in entries:
+        for user, name, description, state, logo in entries:
             seller, _ = Seller.objects.get_or_create(
                 user=user,
                 defaults={
                     "shop_name": name,
                     "shop_description": description,
                     "shop_logo": logo,
-                    "region": region,
+                    "state": state,
                     "phone": "+91-9000000000",
                     "bank_account": "1234567890",
                     "bank_name": "Kala Bank",
@@ -528,6 +531,19 @@ class Command(BaseCommand):
                     "published": True,
                 },
             )
+
+    def _create_story_posts(self, users):
+        entries = [
+            (users["buyer1"], "Visited the artisans market today. The detailing was incredible."),
+            (users["buyer2"], "Just got my handcrafted order. Quality is amazing and delivery was smooth."),
+            (users["seller1"], "New hand-painted collection just dropped this week."),
+            (users["seller2"], "Working on fresh textile patterns inspired by Bengal heritage."),
+            (users["seller3"], "Thank you for the support on our latest craft launch!"),
+        ]
+
+        for user, content in entries:
+            if not StoryPost.objects.filter(user=user, content=content).exists():
+                StoryPost.objects.create(user=user, content=content)
 
     def _create_gallery(self, artisans, products, regions):
         entries = [
