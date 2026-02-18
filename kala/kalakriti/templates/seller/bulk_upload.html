@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block title %}Bulk Upload Products - KalaKriti Seller{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-200px)] bg-gray-50 py-8 px-4">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Add Products in Bulk</h1>
+            <p class="text-gray-600">Upload multiple products at once to your shop</p>
+        </div>
+
+        <!-- Messages handled globally in base.html -->
+
+        <!-- Form -->
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <form method="POST" id="bulkForm" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Instructions -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <p class="text-blue-800 text-sm">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Fill in the fields below. You can add multiple products by clicking "Add Another Product"
+                    </p>
+                </div>
+
+                <!-- Products Container -->
+                <div id="productsContainer" class="space-y-6">
+                    <!-- Template Product Row (will be cloned) -->
+                    <div class="product-row border-2 border-gray-200 rounded-lg p-6 space-y-4">
+                        <!-- Product Name -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-tag mr-2"></i>Product Name *
+                            </label>
+                            <input
+                                type="text"
+                                name="product_name[]"
+                                placeholder="e.g., Handwoven Basket"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                                required
+                            >
+                        </div>
+
+                        <!-- Category -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-list mr-2"></i>Category
+                                </label>
+                                <select name="category[]" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange">
+                                    <option value="">-- Select Category --</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-plus mr-2"></i>Or create new
+                                </label>
+                                <input
+                                    type="text"
+                                    name="new_category[]"
+                                    placeholder="e.g., Gaming Accessories"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                                >
+                                <p class="text-xs text-gray-500 mt-1">Leave blank if selecting existing category</p>
+                            </div>
+                        </div>
+
+                        <!-- Region -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt mr-2"></i>Region
+                            </label>
+                            <input
+                                type="text"
+                                name="region[]"
+                                placeholder="e.g., Rajasthan"
+                                list="region-list"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                            >
+                            <p class="text-xs text-gray-500 mt-1">Leave blank to use your seller state</p>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-rupee-sign mr-2"></i>Price (₹) *
+                                </label>
+                                <input
+                                    type="number"
+                                    name="price[]"
+                                    placeholder="0.00"
+                                    step="0.01"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                                    required
+                                >
+                            </div>
+
+                            <!-- Stock -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-cubes mr-2"></i>Stock Quantity
+                                </label>
+                                <input
+                                    type="number"
+                                    name="stock[]"
+                                    placeholder="0"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-align-left mr-2"></i>Description
+                            </label>
+                            <textarea
+                                name="description[]"
+                                placeholder="Describe your product..."
+                                rows="3"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                            ></textarea>
+                        </div>
+
+                        <!-- Artisan -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-user mr-2"></i>Artisan Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="artisan_name[]"
+                                    placeholder="e.g., Meera Sharma"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-palette mr-2"></i>Artisan Specialty
+                                </label>
+                                <input
+                                    type="text"
+                                    name="artisan_specialty[]"
+                                    placeholder="e.g., Handloom Weaving"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-hourglass-half mr-2"></i>Years of Experience
+                                </label>
+                                <input
+                                    type="number"
+                                    name="artisan_experience[]"
+                                    placeholder="e.g., 5"
+                                    min="1"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-map mr-2"></i>Artisan Region
+                                </label>
+                                <input
+                                    type="text"
+                                    name="artisan_region[]"
+                                    placeholder="e.g., Kutch"
+                                    list="region-list"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                                >
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-id-card mr-2"></i>Artisan Bio
+                            </label>
+                            <textarea
+                                name="artisan_bio[]"
+                                placeholder="Short artisan profile..."
+                                rows="3"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indiaOrange"
+                            ></textarea>
+                        </div>
+
+                        <!-- Remove Button (hidden on first row) -->
+                        <div class="flex justify-end pt-2">
+                            <button
+                                type="button"
+                                class="remove-product bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition hidden"
+                            >
+                                <i class="fas fa-trash mr-2"></i>Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <datalist id="region-list">
+                    {% for region in regions %}
+                        <option value="{{ region.name }}"></option>
+                    {% endfor %}
+                </datalist>
+
+                <!-- Add More Button -->
+                <div class="flex justify-center">
+                    <button
+                        type="button"
+                        id="addMoreBtn"
+                        class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-semibold"
+                    >
+                        <i class="fas fa-plus mr-2"></i>Add Another Product
+                    </button>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex gap-4 pt-6 border-t-2 border-gray-100">
+                    <button
+                        type="submit"
+                        class="flex-1 bg-indiaOrange text-white py-3 rounded-lg font-semibold hover:bg-orange-600 hover:shadow-lg transition"
+                    >
+                        <i class="fas fa-upload mr-2"></i>Upload Products
+                    </button>
+                    <a href="{% url 'kalakriti:seller_dashboard' %}" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-400 transition text-center">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const container = document.getElementById('productsContainer');
+    const addBtn = document.getElementById('addMoreBtn');
+    const template = document.querySelector('.product-row');
+
+    addBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Clone the template
+        const newRow = template.cloneNode(true);
+        
+        // Clear the values
+        newRow.querySelectorAll('input, textarea, select').forEach(el => {
+            el.value = '';
+        });
+        
+        // Show remove button
+        newRow.querySelector('.remove-product').classList.remove('hidden');
+        
+        // Add event listener to remove button
+        newRow.querySelector('.remove-product').addEventListener('click', function() {
+            newRow.remove();
+        });
+        
+        container.appendChild(newRow);
+    });
+
+    // Remove button event delegation
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-product')) {
+            e.preventDefault();
+            e.target.closest('.product-row').remove();
+        }
+    });
+</script>
+{% endblock %}

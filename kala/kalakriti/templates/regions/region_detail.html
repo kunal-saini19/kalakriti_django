@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ region.name }} - KalaKriti{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-16">
+    <!-- Region Hero -->
+    {% if region.image %}
+        <div class="relative h-96 rounded-lg overflow-hidden mb-12">
+            <img src="{{ region.image.url }}" alt="{{ region.name }}" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/40 flex items-end">
+                <div class="p-8 text-white w-full">
+                    <h1 class="text-5xl font-bold mb-2">{{ region.name }}</h1>
+                    <p class="text-lg text-gray-200">{{ region.description }}</p>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="mb-12">
+            <h1 class="text-5xl font-bold mb-4">{{ region.name }}</h1>
+            <p class="text-lg text-gray-600">{{ region.description }}</p>
+        </div>
+    {% endif %}
+    
+    <!-- Cultural Heritage -->
+    {% if region.cultural_heritage %}
+        <section class="mb-16 bg-gradient-to-r from-indiaOrange/10 to-transparent p-8 rounded-lg">
+            <h2 class="text-3xl font-bold mb-4">Cultural <span class="text-indiaOrange">Heritage</span></h2>
+            <p class="text-lg text-gray-700 leading-relaxed">{{ region.cultural_heritage }}</p>
+        </section>
+    {% endif %}
+    
+    <!-- Artisans -->
+    {% if artisans %}
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-8">Featured <span class="text-indiaOrange">Artisans</span></h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for artisan in artisans %}
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    {% if artisan.image %}
+                        <img src="{{ artisan.image.url }}" alt="{{ artisan.name }}" class="w-full h-48 object-cover">
+                    {% else %}
+                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-user text-gray-400 text-4xl"></i>
+                        </div>
+                    {% endif %}
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg mb-1">
+                            <a href="{% url 'kalakriti:artisan_detail' artisan.slug %}" class="hover:text-indiaOrange">
+                                {{ artisan.name }}
+                            </a>
+                        </h3>
+                        <p class="text-indiaOrange text-sm font-medium">{{ artisan.specialty }}</p>
+                        <p class="text-gray-600 text-sm mt-2">{{ artisan.bio|truncatewords:15 }}</p>
+                        <a href="{% url 'kalakriti:artisan_detail' artisan.slug %}" class="inline-block mt-3 text-indiaOrange hover:font-bold">View Profile →</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+    
+    <!-- Products -->
+    {% if products %}
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-8">Products from {{ region.name }}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for product in products %}
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+                    {% else %}
+                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-image text-gray-400 text-4xl"></i>
+                        </div>
+                    {% endif %}
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg mb-2">
+                            <a href="{% url 'kalakriti:product_detail' product.slug %}" class="hover:text-indiaOrange" data-product-id="{{ product.id }}">
+                                {{ product.name }}
+                            </a>
+                        </h3>
+                        <p class="text-indiaOrange font-bold text-lg">₹{{ product.price }}</p>
+                        <a href="{% url 'kalakriti:product_detail' product.slug %}" class="block w-full mt-3 px-4 py-2 bg-indiaOrange text-white rounded text-center hover:bg-orange-600" data-product-id="{{ product.id }}">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+    
+    <!-- Cultural Stories -->
+    {% if stories %}
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-8">Cultural <span class="text-indiaOrange">Stories</span></h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for story in stories %}
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    {% if story.featured_image %}
+                        <img src="{{ story.featured_image.url }}" alt="{{ story.title }}" class="w-full h-48 object-cover">
+                    {% else %}
+                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-image text-gray-400 text-4xl"></i>
+                        </div>
+                    {% endif %}
+                    <div class="p-4">
+                        <p class="text-indiaOrange text-sm font-medium">{{ story.category }}</p>
+                        <h3 class="font-bold text-lg mb-2">
+                            <a href="{% url 'kalakriti:story_detail' story.slug %}" class="hover:text-indiaOrange">
+                                {{ story.title }}
+                            </a>
+                        </h3>
+                        <p class="text-gray-600 text-sm">{{ story.content|truncatewords:20 }}</p>
+                        <a href="{% url 'kalakriti:story_detail' story.slug %}" class="inline-block mt-3 text-indiaOrange hover:font-bold">Read More →</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+    
+    <!-- Gallery -->
+    {% if gallery_images %}
+        <section>
+            <h2 class="text-3xl font-bold mb-8">Gallery</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for image in gallery_images %}
+                <div class="relative overflow-hidden rounded-lg h-64 group cursor-pointer">
+                    {% if image.image %}
+                        <img src="{{ image.image.url }}" alt="{{ image.title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                    {% else %}
+                        <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                            <i class="fas fa-image text-gray-500 text-5xl"></i>
+                        </div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <h3 class="text-white font-bold text-center">{{ image.title }}</h3>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

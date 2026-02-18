@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ story.title }} - KalaKriti{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-16">
+    <!-- Breadcrumb -->
+    <div class="mb-8 text-sm text-gray-600">
+        <a href="{% url 'kalakriti:home' %}" class="hover:text-indiaOrange">Home</a> /
+        <a href="{% url 'kalakriti:cultural_stories' %}" class="hover:text-indiaOrange">Stories</a> /
+        <span>{{ story.title }}</span>
+    </div>
+    
+    <!-- Article Header -->
+    {% if story.featured_image %}
+        <img src="{{ story.featured_image.url }}" alt="{{ story.title }}" class="w-full h-96 object-cover rounded-lg shadow-lg mb-8">
+    {% endif %}
+    
+    <article>
+        <header class="mb-8">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="px-3 py-1 bg-indiaOrange/10 text-indiaOrange text-sm font-semibold rounded-full">
+                    {{ story.category }}
+                </span>
+                <span class="text-gray-600 text-sm">{{ story.created_at|date:"F d, Y" }}</span>
+            </div>
+            
+            <h1 class="text-5xl font-bold mb-4">{{ story.title }}</h1>
+            
+            <div class="flex items-center gap-4 text-gray-600 pb-8 border-b-2 border-gray-200">
+                <div>
+                    <p class="font-semibold">{{ story.author }}</p>
+                    <p class="text-sm">{% if story.region %}From {{ story.region.name }}{% endif %}</p>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Article Content -->
+        <div class="prose prose-lg max-w-none mb-12">
+            <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">{{ story.content }}</p>
+        </div>
+        
+        <!-- Share -->
+        <div class="py-8 border-t border-b border-gray-200 flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 mb-4">Share this story</p>
+                <div class="flex gap-4">
+                    <a href="#" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" title="Share on Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-500" title="Share on Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" title="Share on Pinterest">
+                        <i class="fab fa-pinterest"></i>
+                    </a>
+                    <a href="#" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800" title="Copy Link">
+                        <i class="fas fa-link"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </article>
+    
+    <!-- Related Stories -->
+    {% if related_stories %}
+        <section class="mt-16">
+            <h2 class="text-3xl font-bold mb-8">Related <span class="text-indiaOrange">Stories</span></h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for rel_story in related_stories %}
+                <article class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    {% if rel_story.featured_image %}
+                        <img src="{{ rel_story.featured_image.url }}" alt="{{ rel_story.title }}" class="w-full h-48 object-cover">
+                    {% else %}
+                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-image text-gray-400 text-4xl"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="p-4">
+                        <p class="text-indiaOrange text-sm font-medium">{{ rel_story.category }}</p>
+                        <h3 class="font-bold text-lg mb-2">
+                            <a href="{% url 'kalakriti:story_detail' rel_story.slug %}" class="hover:text-indiaOrange">
+                                {{ rel_story.title }}
+                            </a>
+                        </h3>
+                        <p class="text-gray-600 text-sm mb-3">{{ rel_story.content|truncatewords:20 }}</p>
+                        <a href="{% url 'kalakriti:story_detail' rel_story.slug %}" class="text-indiaOrange hover:font-bold">
+                            Read More →
+                        </a>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+
+<style>
+    .prose {
+        color: inherit;
+    }
+    
+    .prose p {
+        margin-bottom: 1.25rem;
+    }
+</style>
+{% endblock %}

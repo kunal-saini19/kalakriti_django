@@ -1,0 +1,12 @@
+{% if feed_posts %}
+    <div class="space-y-4">
+        {% for post in feed_posts %}
+            {% include 'stories/_story_post_item.html' with post=post %}
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
+        <i class="fas fa-feather text-4xl text-gray-300 mb-3"></i>
+        <p class="text-gray-600">No story posts yet.</p>
+    </div>
+{% endif %}

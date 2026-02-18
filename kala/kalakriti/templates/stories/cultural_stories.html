@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Cultural Stories - KalaKriti{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10 lg:py-14">
+    <div class="mb-8 text-center">
+        <h1 class="text-4xl font-bold mb-3">Stories <span class="text-indiaOrange">Feed</span></h1>
+        <p class="text-gray-600 text-lg">See what other users are sharing from the craft community.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <section class="lg:col-span-8 space-y-6">
+            <div class="sticky top-24 z-20 gradient-card rounded-2xl border border-gray-200 shadow-sm p-5">
+                {% if request.user.is_authenticated %}
+                    <div class="flex justify-end mb-3">
+                        <button id="open-story-composer" type="button" class="bg-indiaOrange text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 transition">
+                            Add Story
+                        </button>
+                    </div>
+
+                    <form id="story-form" method="post" class="space-y-4 hidden">
+                        {% csrf_token %}
+                        <label for="story-content" class="block text-sm font-semibold text-brown-dark">Write your story</label>
+                        <textarea
+                            id="story-content"
+                            name="content"
+                            rows="5"
+                            class="w-full rounded-xl border border-gray-300 p-3 bg-white focus:outline-none focus:ring-2 focus:ring-orange-200"
+                            placeholder="Share your story..."
+                            required
+                        ></textarea>
+                        <p id="story-error" class="hidden text-sm text-red-600"></p>
+
+                        <div class="flex items-center justify-end gap-2">
+                            <button id="cancel-story" type="button" class="px-4 py-2 rounded-lg bg-cream text-brown text-sm font-semibold hover:bg-beige transition">
+                                Cancel
+                            </button>
+                            <button id="submit-story" type="submit" class="bg-indiaOrange text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 transition">
+                                Post Story
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="flex items-center justify-between gap-4">
+                        <p class="text-gray-700 text-sm">Log in to add your story.</p>
+                        <a href="{% url 'kalakriti:login' %}" class="bg-indiaOrange text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 transition">
+                            Login
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-brown-dark">Latest Stories</h2>
+                <span class="text-xs text-gray-500">Auto-refresh every 5 seconds</span>
+            </div>
+
+            <div id="story-feed-container">
+                {% include 'stories/_story_feed_items.html' with feed_posts=feed_posts %}
+            </div>
+        </section>
+
+        <aside class="lg:col-span-4 space-y-5">
+            <div class="bg-cream rounded-2xl border border-gray-200 p-5">
+                <h3 class="font-bold text-brown-dark mb-3">Featured Stories</h3>
+                {% if featured_stories %}
+                    <ul class="space-y-3">
+                        {% for story in featured_stories %}
+                            <li>
+                                <a href="{% url 'kalakriti:story_detail' story.slug %}" class="block text-sm hover:text-indiaOrange">
+                                    <span class="font-semibold text-brown-dark">{{ story.title }}</span>
+                                    <span class="block text-xs text-gray-500 mt-1">{{ story.region.name }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-sm text-gray-500">No featured stories available.</p>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const openButton = document.getElementById('open-story-composer');
+        const cancelButton = document.getElementById('cancel-story');
+        const storyForm = document.getElementById('story-form');
+        const textarea = document.getElementById('story-content');
+        const errorText = document.getElementById('story-error');
+        const submitButton = document.getElementById('submit-story');
+        const feedContainer = document.getElementById('story-feed-container');
+        const feedDataUrl = "{% url 'kalakriti:story_feed_data' %}";
+
+        if (openButton && storyForm) {
+            openButton.addEventListener('click', function () {
+                storyForm.classList.remove('hidden');
+                openButton.classList.add('hidden');
+                if (errorText) {
+                    errorText.textContent = '';
+                    errorText.classList.add('hidden');
+                }
+                if (textarea) textarea.focus();
+            });
+        }
+
+        if (cancelButton && storyForm && openButton) {
+            cancelButton.addEventListener('click', function () {
+                storyForm.classList.add('hidden');
+                openButton.classList.remove('hidden');
+                storyForm.reset();
+                if (errorText) {
+                    errorText.textContent = '';
+                    errorText.classList.add('hidden');
+                }
+            });
+        }
+
+        const refreshFeed = function () {
+            fetch(feedDataUrl, {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (data && data.success && feedContainer) {
+                    feedContainer.innerHTML = data.feed_html;
+                }
+            })
+            .catch(function () {});
+        };
+
+        if (storyForm) {
+            storyForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                if (errorText) {
+                    errorText.textContent = '';
+                    errorText.classList.add('hidden');
+                }
+
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Posting...';
+                    submitButton.classList.add('opacity-70', 'cursor-not-allowed');
+                }
+
+                const formData = new FormData(storyForm);
+
+                fetch("{% url 'kalakriti:cultural_stories' %}", {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (data && data.success) {
+                        storyForm.reset();
+                        storyForm.classList.add('hidden');
+                        if (openButton) openButton.classList.remove('hidden');
+                        refreshFeed();
+                    } else if (errorText) {
+                        errorText.textContent = (data && data.message) ? data.message : 'Could not post story. Please try again.';
+                        errorText.classList.remove('hidden');
+                    }
+                })
+                .catch(function () {
+                    if (errorText) {
+                        errorText.textContent = 'Network error. Please try again.';
+                        errorText.classList.remove('hidden');
+                    }
+                })
+                .finally(function () {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Post Story';
+                        submitButton.classList.remove('opacity-70', 'cursor-not-allowed');
+                    }
+                });
+            });
+        }
+
+        setInterval(refreshFeed, 5000);
+    })();
+</script>
+{% endblock %}

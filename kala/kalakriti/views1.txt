@@ -1,0 +1,125 @@
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.contrib import messages
+from django.views.decorators.http import require_http_methods
+from django.db import transaction
+from django.db.models import Q, Sum, Count
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils import timezone
+from decimal import Decimal
+import secrets
+import time
+
+from .models import (
+    Region, Artisan, Product, CulturalStory, 
+    UserProfile, Seller, ProductActivity, Favorite
+)
+
+# ============ SECURITY HELPERS ============
+
+def _throttle(request, key, limit=5, window_seconds=600):
+    """Prevents brute-force attacks by limiting attempts within a time window."""
+    now = time.time()
+    attempts = request.session.get(key, [])
+    attempts = [ts for ts in attempts if now - ts < window_seconds]
+    if len(attempts) >= limit:
+        request.session[key] = attempts
+        return True
+    attempts.append(now)
+    request.session[key] = attempts
+    request.session.modified = True
+    return False
+
+def _send_verification_email(request, user):
+    """Generates a secure, time-stamped token for email activation."""
+    signer = TimestampSigner(salt='kalakriti-email-verify')
+    token = signer.sign(str(user.id))
+    verify_url = request.build_absolute_uri(f"/verify-email/{token}/")
+    send_mail("Verify your account", f"Link: {verify_url}", settings.DEFAULT_FROM_EMAIL, [user.email])
+
+# ============ AUTHENTICATION ============
+
+def register_view(request):
+    """Handles secure registration with atomic profile creation."""
+    if request.method == 'POST':
+        if _throttle(request, 'signup_attempts'):
+            messages.error(request, 'Too many attempts. Try later.')
+            return render(request, 'auth/register.html')
+
+        email = request.POST.get('email', '').lower()
+        password = request.POST.get('password')
+        
+        try:
+            with transaction.atomic():
+                user = User.objects.create_user(username=email, email=email, password=password)
+                user.is_active = False # Require verification in production
+                user.save()
+                UserProfile.objects.create(user=user, user_type=request.POST.get('user_type', 'buyer'))
+            
+            _send_verification_email(request, user)
+            messages.success(request, 'Please verify your email to activate your account.')
+            return redirect('kalakriti:login')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    return render(request, 'auth/register.html')
+
+def verify_email(request, token):
+    """Validates the cryptographic signature to activate users."""
+    signer = TimestampSigner(salt='kalakriti-email-verify')
+    try:
+        user_id = signer.unsign(token, max_age=60*60*24) # 24 hour expiry
+        User.objects.filter(id=user_id).update(is_active=True)
+        messages.success(request, 'Email verified! You can now log in.')
+    except (BadSignature, SignatureExpired):
+        messages.error(request, 'Invalid or expired link.')
+    return redirect('kalakriti:login')
+
+# ============ MARKETPLACE & SEARCH ============
+
+def products_list(request):
+    """Unified catalog with search using Q objects."""
+    products = Product.objects.all()
+    query = request.GET.get('q')
+    if query:
+        products = products.filter(Q(name__icontains=query) | Q(description__icontains=query))
+    return render(request, 'products/products_list.html', {'products': products})
+
+@require_http_methods(["POST"])
+def add_to_cart(request, product_id):
+    """Manages session-based cart and logs buyer intent for analytics."""
+    product = get_object_or_404(Product, id=product_id)
+    cart = request.session.get('cart', {})
+    cart[str(product.id)] = int(cart.get(str(product.id), 0)) + 1
+    request.session['cart'] = cart
+    
+    if product.seller:
+        ProductActivity.objects.create(seller=product.seller, product=product, activity_type='add_cart')
+    
+    messages.success(request, f'Added {product.name} to cart.')
+    return redirect('kalakriti:cart')
+
+# ============ SELLER ANALYTICS ============
+
+@login_required
+def seller_dashboard(request):
+    """Data-driven insights for artisans to track business growth."""
+    seller = get_object_or_404(Seller, user=request.user)
+    
+    # Efficiently aggregate analytics in SQL
+    stats = seller.activities.aggregate(
+        total_views=Count('id', filter=Q(activity_type='view')),
+        total_purchases=Count('id', filter=Q(activity_type='purchase')),
+        revenue=Sum('details__amount', filter=Q(activity_type='purchase'))
+    )
+    
+    context = {
+        'seller': seller,
+        'stats': stats,
+        'recent_activity': seller.activities.all()[:10]
+    }
+    return render(request, 'seller/dashboard.html', context)

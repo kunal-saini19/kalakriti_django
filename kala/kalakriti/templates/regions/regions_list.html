@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Regions - KalaKriti{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-16">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold mb-4">Explore <span class="text-indiaOrange">Regions</span></h1>
+        <p class="text-gray-600 text-lg">Discover the unique crafts and heritage of different Indian regions</p>
+    </div>
+    
+    <div id="regions-grid">
+        {% include 'regions/_region_cards.html' with regions=regions %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const grid = document.getElementById('regions-grid');
+        const feedUrl = "{% url 'kalakriti:regions_feed_data' %}" + window.location.search;
+
+        const refreshRegions = function () {
+            fetch(feedUrl, {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (data && data.success && grid) {
+                    grid.innerHTML = data.grid_html;
+                }
+            })
+            .catch(function () {});
+        };
+
+        setInterval(refreshRegions, 5000);
+    })();
+</script>
+{% endblock %}

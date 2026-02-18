@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KalaKriti - Indian Craftsmanship{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-orange: #F97316;
+            --color-brown-dark: #3D2914;
+            --color-brown: #5C3D2E;
+            --color-taupe: #8B7355;
+            --color-cream: #F5F0EB;
+            --color-beige: #E8E0D5;
+            --gradient-hero: linear-gradient(135deg, #3D2914 0%, #5C3D2E 40%, #8B7355 100%);
+            --gradient-btn: linear-gradient(135deg, #5C3D2E 0%, #8B7355 100%);
+            --gradient-accent: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+            --gradient-card: linear-gradient(145deg, #ffffff 0%, #F5F0EB 100%);
+            --gradient-section: linear-gradient(180deg, #ffffff 0%, #F5F0EB 100%);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        h1, h2, h3, h4 {
+            font-family: 'Playfair Display', serif;
+        }
+        .text-indiaOrange {
+            color: var(--color-orange);
+        }
+        .bg-indiaOrange {
+            background-color: var(--color-orange);
+        }
+        .gradient-hero {
+            background: var(--gradient-hero);
+        }
+        .gradient-btn {
+            background: var(--gradient-btn);
+            transition: all 0.3s ease;
+        }
+        .gradient-btn:hover {
+            background: linear-gradient(135deg, #4A3222 0%, #7A6245 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(92, 61, 46, 0.3);
+        }
+        .gradient-accent {
+            background: var(--gradient-accent);
+        }
+        .gradient-card {
+            background: var(--gradient-card);
+        }
+        .gradient-section {
+            background: var(--gradient-section);
+        }
+        .bg-cream {
+            background-color: var(--color-cream);
+        }
+        .bg-beige {
+            background-color: var(--color-beige);
+        }
+        .text-brown {
+            color: var(--color-brown);
+        }
+        .text-brown-dark {
+            color: var(--color-brown-dark);
+        }
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(61, 41, 20, 0.15);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-white">
+    <!-- Navigation -->
+    {% include 'components/navbar.html' %}
+    
+    <!-- Messages -->
+    {% if messages %}
+        <div class="fixed top-6 inset-x-0 z-50 flex justify-center px-4">
+            <div class="w-full max-w-xl space-y-3">
+                {% for message in messages %}
+                    {% if message.tags == 'success' %}
+                        <div class="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-800 shadow-lg" role="alert">
+                            <i class="fas fa-check-circle mt-1"></i>
+                            <div class="text-sm font-medium">{{ message }}</div>
+                        </div>
+                    {% elif message.tags == 'error' %}
+                        <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-lg" role="alert">
+                            <i class="fas fa-times-circle mt-1"></i>
+                            <div class="text-sm font-medium">{{ message }}</div>
+                        </div>
+                    {% elif message.tags == 'warning' %}
+                        <div class="flex items-start gap-3 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-yellow-800 shadow-lg" role="alert">
+                            <i class="fas fa-exclamation-circle mt-1"></i>
+                            <div class="text-sm font-medium">{{ message }}</div>
+                        </div>
+                    {% else %}
+                        <div class="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg" role="alert">
+                            <i class="fas fa-info-circle mt-1"></i>
+                            <div class="text-sm font-medium">{{ message }}</div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    {% include 'components/footer.html' %}
+    
+    <script>
+        // Auto-close messages after 5 seconds
+        setTimeout(function() {
+            const messages = document.querySelectorAll('[role="alert"]');
+            messages.forEach(msg => {
+                msg.style.display = 'none';
+            });
+        }, 5000);
+
+        // Track product clicks for analytics
+        document.addEventListener('click', function (event) {
+            const link = event.target.closest('[data-product-id]');
+            if (!link) return;
+            const productId = link.getAttribute('data-product-id');
+            if (!productId) return;
+            fetch(`/products/click/${productId}/`, { method: 'GET', credentials: 'same-origin' })
+                .catch(() => {});
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

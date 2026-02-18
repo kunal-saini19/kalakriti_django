@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Products - {{ seller.shop_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-200px)] bg-gray-50 py-8 px-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800">Your Products</h1>
+                    <p class="text-gray-600 mt-1">Manage and track your product performance</p>
+                </div>
+                <a href="{% url 'kalakriti:bulk_upload' %}" class="bg-indiaOrange text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition">
+                    <i class="fas fa-plus mr-2"></i>Add More Products
+                </a>
+            </div>
+
+            <!-- Seller Tabs Navigation -->
+            <div class="flex gap-4 border-b-2 border-gray-200 flex-wrap">
+                <a href="{% url 'kalakriti:seller_dashboard' %}" class="pb-2 text-gray-600 font-semibold hover:text-indiaOrange">
+                    <i class="fas fa-chart-line mr-2"></i>Dashboard
+                </a>
+                <a href="{% url 'kalakriti:seller_products' %}" class="pb-2 border-b-4 border-indiaOrange text-indiaOrange font-semibold">
+                    <i class="fas fa-boxes mr-2"></i>Products
+                </a>
+                <a href="{% url 'kalakriti:seller_activity' %}" class="pb-2 text-gray-600 font-semibold hover:text-indiaOrange">
+                    <i class="fas fa-history mr-2"></i>Activity
+                </a>
+                <a href="{% url 'kalakriti:seller_analytics' %}" class="pb-2 text-gray-600 font-semibold hover:text-indiaOrange">
+                    <i class="fas fa-chart-bar mr-2"></i>Analytics
+                </a>
+                <a href="{% url 'kalakriti:seller_profile' %}" class="pb-2 text-gray-600 font-semibold hover:text-indiaOrange">
+                    <i class="fas fa-user-cog mr-2"></i>Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            {% if product_stats %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-100 border-b-2 border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Product</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Price</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Stock</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Views</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Sales</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for stat in product_stats %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4">
+                                <div>
+                                    <p class="font-semibold text-gray-800">{{ stat.seller_product.product.name }}</p>
+                                    <p class="text-xs text-gray-600">SKU: {{ stat.seller_product.seller_sku }}</p>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-800 font-semibold">
+                                ₹{{ stat.seller_product.seller_price }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 rounded-full {% if stat.seller_product.seller_stock > 0 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %} text-sm font-semibold">
+                                    {{ stat.seller_product.seller_stock }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-gray-800 font-semibold">
+                                    {{ stat.views }}
+                                </div>
+                                <p class="text-xs text-gray-600">views</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-gray-800 font-semibold">
+                                    {{ stat.sales }}
+                                </div>
+                                <p class="text-xs text-gray-600">orders</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if stat.seller_product.seller_stock > 0 %}
+                                    <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">
+                                        In Stock
+                                    </span>
+                                {% else %}
+                                    <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-semibold">
+                                        Out of Stock
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Stats Footer -->
+            <div class="bg-gray-50 border-t border-gray-200 p-6">
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <p class="text-gray-600 text-sm">Total Products</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ product_stats|length }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600 text-sm">Total Views</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ total_views }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600 text-sm">Total Sales</p>
+                        <p class="text-2xl font-bold text-green-600">{{ total_sales }}</p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="p-12 text-center">
+                <i class="fas fa-boxes text-6xl text-gray-300 mb-4 block"></i>
+                <p class="text-gray-600 text-lg">No products yet</p>
+                <p class="text-gray-500 mb-6">Start by adding your first products</p>
+                <a href="{% url 'kalakriti:bulk_upload' %}" class="inline-block bg-indiaOrange text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition">
+                    <i class="fas fa-plus mr-2"></i>Add Products
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

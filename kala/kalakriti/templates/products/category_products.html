@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ category.name }} - KalaKriti{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-16">
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold mb-2">{{ category.name }}</h1>
+        <p class="text-gray-600">{{ category.description }}</p>
+    </div>
+    
+    {% if products %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for product in products %}
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+                {% else %}
+                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                        <i class="fas fa-image text-gray-400 text-4xl"></i>
+                    </div>
+                {% endif %}
+                <div class="p-4">
+                    <h3 class="font-bold text-lg mb-2">
+                        <a href="{% url 'kalakriti:product_detail' product.slug %}" class="hover:text-indiaOrange" data-product-id="{{ product.id }}">
+                            {{ product.name }}
+                        </a>
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-3">{{ product.description|truncatewords:20 }}</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-indiaOrange font-bold text-lg">₹{{ product.price }}</p>
+                        {% if product.rating %}
+                            <div class="flex gap-1">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= product.rating %}
+                                        <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                    {% else %}
+                                        <i class="fas fa-star text-gray-300 text-sm"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'kalakriti:product_detail' product.slug %}" class="block w-full px-4 py-2 bg-indiaOrange text-white rounded text-center hover:bg-orange-600" data-product-id="{{ product.id }}">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-16">
+            <i class="fas fa-box text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-600 text-lg">No products in this category yet</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

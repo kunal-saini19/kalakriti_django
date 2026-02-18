@@ -1,0 +1,221 @@
+<nav class="bg-gradient-to-r from-white via-white to-cream/50 shadow-lg sticky top-0 z-40 backdrop-blur-md nav-enter border-b border-beige/30">
+    <style>
+        .nav-enter {
+            animation: navFadeIn 0.5s ease-out;
+        }
+
+        .nav-link {
+            position: relative;
+            transition: color 0.25s ease, transform 0.25s ease;
+            font-weight: 500;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -6px;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--color-brown) 0%, var(--color-taupe) 100%);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.25s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--color-brown);
+            transform: translateY(-1px);
+        }
+
+        .nav-link:hover::after {
+            transform: scaleX(1);
+        }
+
+        .nav-btn {
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(92, 61, 46, 0.25);
+        }
+
+        .nav-btn-gradient {
+            background: linear-gradient(135deg, var(--color-brown) 0%, var(--color-taupe) 100%);
+        }
+
+        .nav-btn-gradient:hover {
+            background: linear-gradient(135deg, var(--color-brown-dark) 0%, var(--color-brown) 100%);
+        }
+
+        .nav-search-input {
+            transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+            border-color: var(--color-beige);
+        }
+
+        .nav-search-input:focus {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(92, 61, 46, 0.12);
+            border-color: var(--color-taupe);
+        }
+
+        .nav-search-btn {
+            background: linear-gradient(135deg, var(--color-brown) 0%, var(--color-taupe) 100%);
+            transition: transform 0.25s ease, background 0.25s ease;
+        }
+
+        .nav-search-btn:hover {
+            transform: translateY(-1px) scale(1.02);
+            background: linear-gradient(135deg, var(--color-brown-dark) 0%, var(--color-brown) 100%);
+        }
+
+        .nav-mobile-link {
+            transition: color 0.2s ease, transform 0.2s ease, padding-left 0.2s ease;
+        }
+
+        .nav-mobile-link:hover {
+            transform: translateX(4px);
+            padding-left: 4px;
+            color: var(--color-brown);
+        }
+
+        @keyframes navFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center">
+            <a href="{% url 'kalakriti:home' %}" class="flex items-center gap-2 nav-link">
+                <i class="fas fa-palette text-2xl text-indiaOrange"></i>
+                <span class="text-xl font-bold">KalaKriti</span>
+            </a>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="hidden md:flex flex-1 max-w-md mx-8">
+            <form method="GET" action="{% url 'kalakriti:search_all' %}" class="w-full flex">
+                <input 
+                    type="text" 
+                    name="q" 
+                    placeholder="Search products, artisans..." 
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indiaOrange nav-search-input"
+                >
+                <button type="submit" class="text-white px-4 py-2 rounded-r-lg nav-search-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+        
+        <!-- Menu Items -->
+        <div class="hidden md:flex items-center gap-6">
+            <a href="{% url 'kalakriti:home' %}" class="hover:text-indiaOrange nav-link">Home</a>
+            <a href="{% url 'kalakriti:products_list' %}" class="hover:text-indiaOrange nav-link">Products</a>
+            <a href="{% url 'kalakriti:artisans_list' %}" class="hover:text-indiaOrange nav-link">Artisans</a>
+            <a href="{% url 'kalakriti:regions_list' %}" class="hover:text-indiaOrange nav-link">Regions</a>
+            <a href="{% url 'kalakriti:cultural_stories' %}" class="hover:text-indiaOrange nav-link">Stories</a>
+            <a href="{% url 'kalakriti:cart' %}" class="hover:text-indiaOrange nav-link">
+                <i class="fas fa-shopping-cart mr-1"></i>Cart
+            </a>
+            
+            {% if user.is_authenticated %}
+                <div class="relative group">
+                    <button class="flex items-center gap-2 text-white px-4 py-2 rounded-lg nav-btn nav-btn-gradient">
+                        <i class="fas fa-user"></i>
+                        {{ user.first_name|default:user.email }}
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </button>
+                    <div class="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-xl hidden group-hover:block z-50 transition-all duration-200">
+                        {% if user.profile.user_type == 'seller' %}
+                            <div class="px-4 py-3 border-b border-gray-100 font-semibold text-gray-800">
+                                <i class="fas fa-store text-indiaOrange mr-2"></i>Seller Dashboard
+                            </div>
+                            <a href="{% url 'kalakriti:seller_dashboard' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700 nav-mobile-link">
+                                <i class="fas fa-chart-line text-indiaOrange mr-2"></i>Dashboard
+                            </a>
+                            <a href="{% url 'kalakriti:bulk_upload' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700 nav-mobile-link">
+                                <i class="fas fa-plus text-indiaOrange mr-2"></i>Add Products
+                            </a>
+                            <a href="{% url 'kalakriti:seller_products' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700 nav-mobile-link">
+                                <i class="fas fa-boxes text-indiaOrange mr-2"></i>My Products
+                            </a>
+                            <a href="{% url 'kalakriti:seller_analytics' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700 nav-mobile-link">
+                                <i class="fas fa-chart-bar text-indiaOrange mr-2"></i>Analytics
+                            </a>
+                            <a href="{% url 'kalakriti:seller_profile' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700 nav-mobile-link">
+                                <i class="fas fa-user-cog text-indiaOrange mr-2"></i>Edit Profile
+                            </a>
+                            <hr class="my-2">
+                        {% else %}
+                            <div class="px-4 py-3 border-b border-gray-100 font-semibold text-gray-800">
+                                <i class="fas fa-shopping-bag text-indiaOrange mr-2"></i>Buyer Menu
+                            </div>
+                            <a href="{% url 'kalakriti:private' %}" class="block px-4 py-3 hover:bg-orange-50 text-gray-700 nav-mobile-link">
+                                <i class="fas fa-user text-indiaOrange mr-2"></i>My Account
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'kalakriti:logout' %}" class="block px-4 py-3 hover:bg-red-50 text-red-600 border-t border-gray-100 nav-mobile-link">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'kalakriti:login' %}" class="px-4 py-2 border-2 border-brown text-brown rounded-lg hover:bg-cream font-semibold transition nav-btn" style="border-color: var(--color-brown); color: var(--color-brown);">Login</a>
+                <a href="{% url 'kalakriti:register' %}" class="px-4 py-2 text-white rounded-lg font-semibold transition nav-btn nav-btn-gradient">Sign Up</a>
+            {% endif %}
+        </div>
+        
+        <!-- Mobile Menu Button -->
+        <button class="md:hidden text-2xl" type="button" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+    
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-200 px-4 py-4">
+        <a href="{% url 'kalakriti:home' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link">Home</a>
+        <a href="{% url 'kalakriti:products_list' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link">Products</a>
+        <a href="{% url 'kalakriti:artisans_list' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link">Artisans</a>
+        <a href="{% url 'kalakriti:regions_list' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link">Regions</a>
+        <a href="{% url 'kalakriti:cultural_stories' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link">Stories</a>
+        <a href="{% url 'kalakriti:cart' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link">
+            <i class="fas fa-shopping-cart mr-2"></i>Cart
+        </a>
+        
+        {% if user.is_authenticated %}
+            <div class="border-t border-gray-200 pt-4">
+                <p class="text-sm text-gray-600 font-semibold mb-3">{{ user.first_name|default:user.email }}</p>
+                {% if user.profile.user_type == 'seller' %}
+                    <a href="{% url 'kalakriti:seller_dashboard' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link"><i class="fas fa-chart-line mr-2"></i>Seller Dashboard</a>
+                    <a href="{% url 'kalakriti:bulk_upload' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link"><i class="fas fa-plus mr-2"></i>Add Products</a>
+                    <a href="{% url 'kalakriti:seller_products' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link"><i class="fas fa-boxes mr-2"></i>My Products</a>
+                    <a href="{% url 'kalakriti:seller_analytics' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link"><i class="fas fa-chart-bar mr-2"></i>Analytics</a>
+                    <a href="{% url 'kalakriti:seller_profile' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link"><i class="fas fa-user-cog mr-2"></i>Edit Profile</a>
+                {% else %}
+                    <a href="{% url 'kalakriti:private' %}" class="block py-2 hover:text-indiaOrange nav-mobile-link"><i class="fas fa-user mr-2"></i>My Account</a>
+                {% endif %}
+            </div>
+            <a href="{% url 'kalakriti:logout' %}" class="block py-2 text-red-600 hover:text-red-700 border-t border-gray-200 mt-4 pt-4 nav-mobile-link"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+        {% else %}
+            <div class="flex gap-3 pt-4 border-t border-gray-200">
+                <a href="{% url 'kalakriti:login' %}" class="flex-1 text-center py-2 border-2 border-indiaOrange text-indiaOrange rounded-lg hover:bg-orange-50 font-semibold nav-btn">Login</a>
+                <a href="{% url 'kalakriti:register' %}" class="flex-1 text-center py-2 bg-indiaOrange text-white rounded-lg hover:bg-orange-600 font-semibold nav-btn">Sign Up</a>
+            </div>
+        {% endif %}
+    </div>
+</nav>
+
+<script>
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    menu.classList.toggle('hidden');
+}
+</script>
